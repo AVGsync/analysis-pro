@@ -37,3 +37,7 @@ func (d *DB) Close() {
 func (d *DB) User() *UserRepository {
 	return &UserRepository{database: d}
 }
+
+func (d *DB) Sale() *SaleRepository {
+	return &SaleRepository{database: d}
+}

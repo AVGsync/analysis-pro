@@ -14,20 +14,17 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - bridge
+      - app_net
   
   postgres-migrate:
     image: migrate/migrate:latest
     container_name: migrate
     volumes:
       - ./migrations:/migrations
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
-      - bridge
+      - app_net
 
 networks:
-  bridge:
+  app_net:
     driver: bridge
 

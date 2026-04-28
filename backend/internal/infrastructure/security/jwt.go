@@ -20,10 +20,12 @@ func NewJWTManager(secret string, ttl time.Duration) *JWTManager {
     }
 }
 
-func (j *JWTManager) Generate(userID string, role string) (string, error) {
+func (j *JWTManager) Generate(userID string, role string, subscriptionPlan string) (string, error) {
     claims := model.Claims{
         UserID: userID,
         Role:   role,
+        SubscriptionPlan: subscriptionPlan,
+				
         RegisteredClaims: jwt.RegisteredClaims{
             ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.ttl)),
             IssuedAt: jwt.NewNumericDate(time.Now()),
@@ -38,4 +40,27 @@ func (j *JWTManager) Generate(userID string, role string) (string, error) {
     }
 
     return signed, nil
+}
+
+func (j *JWTManager) Validate(tokenStr string) (*model.Claims, error) {
+    token, err := jwt.ParseWithClaims(
+        tokenStr,
+        &model.Claims{}, 
+        func(t *jwt.Token) (any, error) {
+            if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+                return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+            }
+            return j.secret, nil 
+        },
+    )
+    if err != nil {
+        return nil, fmt.Errorf("jwt: parse: %w", err)
+    }
+
+    claims, ok := token.Claims.(*model.Claims)
+    if !ok || !token.Valid {
+        return nil, fmt.Errorf("jwt: invalid claims")
+    }
+
+    return claims, nil
 }

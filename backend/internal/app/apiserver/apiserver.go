@@ -74,21 +74,41 @@ func (s *APIServer) configureDB() error {
 }
 
 func (s *APIServer) configureRouter() {
-	userRepo := s.db.User()
 	hasher := security.NewHasher()
 	jwtManager := security.NewJWTManager(s.config.JWTSecret, time.Duration(s.config.TTLAccessToken) * time.Second)
+
+	userRepo := s.db.User()
+	saleRepo := s.db.Sale()
+
 	userService := service.NewUserService(userRepo, hasher, jwtManager)
+	saleService := service.NewSaleService(saleRepo)
+
 	userHandler := handler.NewUserHandler(userService)
-	middleware := middleware.NewMiddleware()
+	saleHandler := handler.NewSaleHandler(saleService)
+
+	middleware := middleware.NewMiddleware(jwtManager)
 
 	s.router.Route("/api", func(r chi.Router) {
 		r.Use(middleware.Trace)
+
 		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("pong"))
 		})
+
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", userHandler.RegisterNewUser())
 			r.Post("/login", userHandler.LoginUser())
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Auth)
+
+			r.Get("/me", userHandler.GetMe())
+			r.Patch("/me", userHandler.UpdateUser())
+			
+			r.Route("/products", func(r chi.Router) {
+				r.Get("/sell-detail", saleHandler.GetSaleDetails())
+			})
 		})
 	})
 }
