@@ -11,6 +11,7 @@ type Config struct {
 	BindAddr string    `envconfig:"BIND_ADDR" default:":8080"`
 	LogLevel string    `envconfig:"LOG_LEVEL" default:"debug"`
 	JWTSecret string `envconfig:"JWT_SECRET" required:"true"`
+	TTLAccessToken  int64  `envconfig:"TTL_ACCESS_TOKEN" default:"3600"` 
 	PostgresUser		 string `envconfig:"POSTGRES_USER" default:"postgres"`
 	PostgresPassword string `envconfig:"POSTGRES_PASSWORD" default:"postgres"`
 	PostgresPort     string `envconfig:"POSTGRES_PORT" default:"5432"`

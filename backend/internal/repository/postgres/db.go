@@ -33,3 +33,7 @@ func (d *DB) Open() error {
 func (d *DB) Close() {
 	d.db.Close()
 }
+
+func (d *DB) User() *UserRepository {
+	return &UserRepository{database: d}
+}

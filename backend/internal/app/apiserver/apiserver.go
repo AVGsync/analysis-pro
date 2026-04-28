@@ -5,8 +5,14 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/AVGsync/analysis-pro/backend/internal/infrastructure/security"
 	"github.com/AVGsync/analysis-pro/backend/internal/repository/postgres"
+	"github.com/AVGsync/analysis-pro/backend/internal/service"
+	"github.com/AVGsync/analysis-pro/backend/internal/transport/http/handler"
+	"github.com/AVGsync/analysis-pro/backend/internal/transport/http/middleware"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -68,10 +74,21 @@ func (s *APIServer) configureDB() error {
 }
 
 func (s *APIServer) configureRouter() {
+	userRepo := s.db.User()
+	hasher := security.NewHasher()
+	jwtManager := security.NewJWTManager(s.config.JWTSecret, time.Duration(s.config.TTLAccessToken) * time.Second)
+	userService := service.NewUserService(userRepo, hasher, jwtManager)
+	userHandler := handler.NewUserHandler(userService)
+	middleware := middleware.NewMiddleware()
 
 	s.router.Route("/api", func(r chi.Router) {
+		r.Use(middleware.Trace)
 		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("pong"))
+		})
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", userHandler.RegisterNewUser())
+			r.Post("/login", userHandler.LoginUser())
 		})
 	})
 }
