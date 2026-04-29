@@ -2,6 +2,8 @@ package apiserver
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -16,7 +18,10 @@ type Config struct {
 	PostgresPassword string `envconfig:"POSTGRES_PASSWORD" default:"postgres"`
 	PostgresPort     string `envconfig:"POSTGRES_PORT" default:"5432"`
 	PostgresDB   string `envconfig:"POSTGRES_DB" default:"analysis"`
+	ForecastHost string `envconfig:"FORECAST_HOST" default:"forecast"`
+	ForecastPort string `envconfig:"FORECAST_PORT" default:"8001"`
 }
+
 
 func (c *Config) DatabaseURL() string {
 	return fmt.Sprintf(
@@ -28,15 +33,35 @@ func (c *Config) DatabaseURL() string {
 	)
 }
 
-func NewConfig() (*Config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("apiserver: load .env file: %w", err)
-	}
+func (c *Config) ForecastURL() string {
+	return fmt.Sprintf("http://%s:%s", c.ForecastHost, c.ForecastPort)
+}
 
-	var cfg Config
-	if err := envconfig.Process("", &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
+func NewConfig() (*Config, error) {
+    if err := loadEnv(); err != nil {
+        fmt.Fprintf(os.Stderr, "warn: .env not found: %v\n", err)
+    }
+
+    var cfg Config
+    if err := envconfig.Process("", &cfg); err != nil {
+        return nil, fmt.Errorf("config: process env: %w", err)
+    }
+    return &cfg, nil
+}
+
+func loadEnv() error {
+    dir, err := os.Getwd()
+    if err != nil {
+        return err
+    }
+
+    for i := 0; i < 3; i++ {
+        envPath := filepath.Join(dir, ".env")
+        if _, err := os.Stat(envPath); err == nil {
+            return godotenv.Load(envPath)
+        }
+        dir = filepath.Dir(dir) 
+    }
+
+    return fmt.Errorf(".env not found")
 }

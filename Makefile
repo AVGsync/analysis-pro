@@ -4,8 +4,7 @@ export
 .PHONY: build run migrate-create migrate-up
 
 run:
-	@go build -v ./cmd/apiserver 
-	./apiserver
+	@cd backend && go build -v ./cmd/apiserver && ./apiserver
 
 migrate-create:
 	@if [ -z "$(seq)" ]; then \

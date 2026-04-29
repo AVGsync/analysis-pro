@@ -20,7 +20,21 @@ services:
     image: migrate/migrate:latest
     container_name: migrate
     volumes:
-      - ./migrations:/migrations
+      - ./backend/migrations:/migrations
+    networks:
+      - app_net
+
+  forecast:
+    build: ./forecast
+    container_name: forecast
+    ports:
+      - "8001:8001"
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db   
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - app_net
 

@@ -41,3 +41,11 @@ func (d *DB) User() *UserRepository {
 func (d *DB) Sale() *SaleRepository {
 	return &SaleRepository{database: d}
 }
+
+func (d *DB) Forecast() *ForecastRepository {
+	return &ForecastRepository{database: d}
+}
+
+func (d *DB) Export() *ExportRepository {
+	return &ExportRepository{database: d}
+}

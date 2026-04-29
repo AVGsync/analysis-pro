@@ -19,45 +19,121 @@ INSERT INTO products (category_id, name, sku, price, stock) VALUES
     (4, 'AirPods Pro 2',               'APPLE-APP-2',   24999.00, 50),
     (5, 'iPad Air M1',                 'APPLE-IPAD-A',  69999.00, 20);
 
--- Продажи за последние 30 дней
+-- Продажи за последние 90 дней (~100 записей)
 INSERT INTO sales (product_id, quantity, revenue, sold_at) VALUES
-    -- Dell XPS 13
-    (1, 2, 179998.00, CURRENT_DATE - 1),
-    (1, 1, 89999.00,  CURRENT_DATE - 5),
-    (1, 3, 269997.00, CURRENT_DATE - 12),
-    (1, 2, 179998.00, CURRENT_DATE - 20),
+    -- Dell XPS 13 (id=1) — стабильный спрос ~1-2 в неделю
+    (1, 2, 179998.00, CURRENT_DATE -  1),
+    (1, 1,  89999.00, CURRENT_DATE -  5),
+    (1, 3, 269997.00, CURRENT_DATE -  9),
+    (1, 2, 179998.00, CURRENT_DATE - 13),
+    (1, 1,  89999.00, CURRENT_DATE - 17),
+    (1, 2, 179998.00, CURRENT_DATE - 21),
+    (1, 3, 269997.00, CURRENT_DATE - 25),
+    (1, 1,  89999.00, CURRENT_DATE - 30),
+    (1, 2, 179998.00, CURRENT_DATE - 35),
+    (1, 1,  89999.00, CURRENT_DATE - 40),
+    (1, 3, 269997.00, CURRENT_DATE - 46),
+    (1, 2, 179998.00, CURRENT_DATE - 52),
+    (1, 1,  89999.00, CURRENT_DATE - 58),
+    (1, 2, 179998.00, CURRENT_DATE - 64),
+    (1, 3, 269997.00, CURRENT_DATE - 71),
+    (1, 1,  89999.00, CURRENT_DATE - 78),
+    (1, 2, 179998.00, CURRENT_DATE - 85),
+    (1, 1,  89999.00, CURRENT_DATE - 90),
 
-    -- MacBook Air
-    (2, 1, 129999.00, CURRENT_DATE - 2),
-    (2, 2, 259998.00, CURRENT_DATE - 8),
+    -- MacBook Air M2 (id=2) — дорогой, редкие продажи
+    (2, 1, 129999.00, CURRENT_DATE -  2),
+    (2, 2, 259998.00, CURRENT_DATE -  8),
     (2, 1, 129999.00, CURRENT_DATE - 15),
+    (2, 1, 129999.00, CURRENT_DATE - 23),
+    (2, 2, 259998.00, CURRENT_DATE - 31),
+    (2, 1, 129999.00, CURRENT_DATE - 42),
+    (2, 1, 129999.00, CURRENT_DATE - 55),
+    (2, 2, 259998.00, CURRENT_DATE - 68),
+    (2, 1, 129999.00, CURRENT_DATE - 80),
 
-    -- iPhone 15
-    (4, 3, 299997.00, CURRENT_DATE - 1),
-    (4, 2, 199998.00, CURRENT_DATE - 6),
-    (4, 5, 499995.00, CURRENT_DATE - 10),
-    (4, 1, 99999.00,  CURRENT_DATE - 18),
-    (4, 4, 399996.00, CURRENT_DATE - 25),
+    -- iPhone 15 (id=4) — растущий тренд, самый популярный
+    (4, 3, 299997.00, CURRENT_DATE -  1),
+    (4, 2, 199998.00, CURRENT_DATE -  3),
+    (4, 5, 499995.00, CURRENT_DATE -  6),
+    (4, 4, 399996.00, CURRENT_DATE -  9),
+    (4, 3, 299997.00, CURRENT_DATE - 12),
+    (4, 5, 499995.00, CURRENT_DATE - 15),
+    (4, 4, 399996.00, CURRENT_DATE - 18),
+    (4, 3, 299997.00, CURRENT_DATE - 21),
+    (4, 6, 599994.00, CURRENT_DATE - 24),
+    (4, 4, 399996.00, CURRENT_DATE - 27),
+    (4, 3, 299997.00, CURRENT_DATE - 31),
+    (4, 5, 499995.00, CURRENT_DATE - 35),
+    (4, 2, 199998.00, CURRENT_DATE - 40),
+    (4, 4, 399996.00, CURRENT_DATE - 45),
+    (4, 3, 299997.00, CURRENT_DATE - 50),
+    (4, 5, 499995.00, CURRENT_DATE - 56),
+    (4, 2, 199998.00, CURRENT_DATE - 62),
+    (4, 4, 399996.00, CURRENT_DATE - 68),
+    (4, 3, 299997.00, CURRENT_DATE - 75),
+    (4, 2, 199998.00, CURRENT_DATE - 82),
+    (4, 3, 299997.00, CURRENT_DATE - 89),
 
-    -- Samsung S24
-    (5, 2, 159998.00, CURRENT_DATE - 3),
-    (5, 3, 239997.00, CURRENT_DATE - 9),
-    (5, 1, 79999.00,  CURRENT_DATE - 14),
+    -- Samsung S24 (id=5) — стабильный спрос
+    (5, 2, 159998.00, CURRENT_DATE -  3),
+    (5, 3, 239997.00, CURRENT_DATE -  9),
+    (5, 1,  79999.00, CURRENT_DATE - 14),
+    (5, 2, 159998.00, CURRENT_DATE - 20),
+    (5, 3, 239997.00, CURRENT_DATE - 26),
+    (5, 2, 159998.00, CURRENT_DATE - 33),
+    (5, 1,  79999.00, CURRENT_DATE - 39),
+    (5, 3, 239997.00, CURRENT_DATE - 46),
+    (5, 2, 159998.00, CURRENT_DATE - 53),
+    (5, 2, 159998.00, CURRENT_DATE - 61),
+    (5, 1,  79999.00, CURRENT_DATE - 69),
+    (5, 3, 239997.00, CURRENT_DATE - 77),
+    (5, 2, 159998.00, CURRENT_DATE - 85),
 
-    -- Кофемашина
-    (7, 1, 45000.00,  CURRENT_DATE - 4),
-    (7, 2, 90000.00,  CURRENT_DATE - 11),
-    (7, 1, 45000.00,  CURRENT_DATE - 22),
+    -- Кофемашина DeLonghi (id=7) — редкий товар
+    (7, 1, 45000.00, CURRENT_DATE -  4),
+    (7, 2, 90000.00, CURRENT_DATE - 11),
+    (7, 1, 45000.00, CURRENT_DATE - 22),
+    (7, 1, 45000.00, CURRENT_DATE - 34),
+    (7, 2, 90000.00, CURRENT_DATE - 48),
+    (7, 1, 45000.00, CURRENT_DATE - 63),
+    (7, 1, 45000.00, CURRENT_DATE - 79),
 
-    -- AirPods
-    (9, 5, 124995.00, CURRENT_DATE - 2),
-    (9, 3, 74997.00,  CURRENT_DATE - 7),
-    (9, 4, 99996.00,  CURRENT_DATE - 16),
-
-    -- Dyson
-    (8, 1, 59999.00,  CURRENT_DATE - 5),
+    -- Пылесос Dyson V15 (id=8) — редкий, дорогой
+    (8, 1, 59999.00, CURRENT_DATE -  5),
     (8, 2, 119998.00, CURRENT_DATE - 19),
+    (8, 1, 59999.00, CURRENT_DATE - 33),
+    (8, 1, 59999.00, CURRENT_DATE - 50),
+    (8, 2, 119998.00, CURRENT_DATE - 67),
+    (8, 1, 59999.00, CURRENT_DATE - 83),
 
-    -- iPad
-    (10, 2, 139998.00, CURRENT_DATE - 3),
-    (10, 1, 69999.00,  CURRENT_DATE - 13);
+    -- AirPods Pro 2 (id=9) — высокий стабильный спрос
+    (9, 5, 124995.00, CURRENT_DATE -  2),
+    (9, 3,  74997.00, CURRENT_DATE -  5),
+    (9, 4,  99996.00, CURRENT_DATE -  8),
+    (9, 6, 149994.00, CURRENT_DATE - 11),
+    (9, 5, 124995.00, CURRENT_DATE - 14),
+    (9, 4,  99996.00, CURRENT_DATE - 17),
+    (9, 3,  74997.00, CURRENT_DATE - 21),
+    (9, 5, 124995.00, CURRENT_DATE - 25),
+    (9, 6, 149994.00, CURRENT_DATE - 29),
+    (9, 4,  99996.00, CURRENT_DATE - 33),
+    (9, 5, 124995.00, CURRENT_DATE - 38),
+    (9, 3,  74997.00, CURRENT_DATE - 44),
+    (9, 6, 149994.00, CURRENT_DATE - 50),
+    (9, 4,  99996.00, CURRENT_DATE - 57),
+    (9, 5, 124995.00, CURRENT_DATE - 64),
+    (9, 3,  74997.00, CURRENT_DATE - 72),
+    (9, 4,  99996.00, CURRENT_DATE - 80),
+    (9, 5, 124995.00, CURRENT_DATE - 88),
+
+    -- iPad Air M1 (id=10) — умеренный спрос
+    (10, 2, 139998.00, CURRENT_DATE -  3),
+    (10, 1,  69999.00, CURRENT_DATE - 13),
+    (10, 2, 139998.00, CURRENT_DATE - 22),
+    (10, 1,  69999.00, CURRENT_DATE - 32),
+    (10, 3, 209997.00, CURRENT_DATE - 43),
+    (10, 2, 139998.00, CURRENT_DATE - 54),
+    (10, 1,  69999.00, CURRENT_DATE - 66),
+    (10, 2, 139998.00, CURRENT_DATE - 78),
+    (10, 1,  69999.00, CURRENT_DATE - 88);

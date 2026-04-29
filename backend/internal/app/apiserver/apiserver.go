@@ -79,12 +79,18 @@ func (s *APIServer) configureRouter() {
 
 	userRepo := s.db.User()
 	saleRepo := s.db.Sale()
+	forecastRepo := s.db.Forecast()
+	exportRepo := s.db.Export()
 
 	userService := service.NewUserService(userRepo, hasher, jwtManager)
 	saleService := service.NewSaleService(saleRepo)
+	forecastService := service.NewForecastService(s.config.ForecastURL(), forecastRepo)
+	exportService := service.NewExportService(exportRepo, forecastService)
 
 	userHandler := handler.NewUserHandler(userService)
 	saleHandler := handler.NewSaleHandler(saleService)
+	forecastHandler := handler.NewForecastHandler(forecastService)
+	exportHandler := handler.NewExportHandler(exportService)
 
 	middleware := middleware.NewMiddleware(jwtManager)
 
@@ -108,6 +114,12 @@ func (s *APIServer) configureRouter() {
 			
 			r.Route("/products", func(r chi.Router) {
 				r.Get("/sell-detail", saleHandler.GetSaleDetails())
+				r.Get("/forecast", forecastHandler.GetForecast())
+				r.Get("/forecast/monthly", forecastHandler.GetForecastMonthly())
+				r.Get("/export/forecast", exportHandler.ExportForecast())
+				r.Get("/export/assortment", exportHandler.ExportAssortment())
+
+				r.Get("/recommendations", forecastHandler.GetRecommendations())
 			})
 		})
 	})
