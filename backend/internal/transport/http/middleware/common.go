@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/AVGsync/analysis-pro/backend/internal/model"
@@ -30,13 +29,11 @@ type JWTManager interface {
 
 type Middleware struct {
 	jwtManager JWTManager
-	debug      bool
 }
 
-func NewMiddleware(jwtmanager JWTManager, debug bool) *Middleware {
+func NewMiddleware(jwtmanager JWTManager) *Middleware {
 	return &Middleware{
 		jwtManager: jwtmanager,
-		debug:      debug,
 	}
 }
 
@@ -64,55 +61,38 @@ func (m *Middleware) Trace(next http.Handler) http.Handler {
 
 func (m *Middleware) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokens := m.tokenCandidates(r)
-		if len(tokens) == 0 {
+		cookie, err := r.Cookie("token")
+		if err != nil || cookie.Value == "" {
 			slog.Debug("no token", "path", r.URL.Path)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		var lastErr error
-		for _, token := range tokens {
-			claims, err := m.jwtManager.Validate(token.value)
-			if err == nil {
-				slog.Debug("auth token accepted", "source", token.source)
-				ctx := context.WithValue(r.Context(), "claims", claims)
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-			lastErr = err
+		claims, err := m.jwtManager.Validate(cookie.Value)
+		if err != nil {
+			slog.Debug("invalid token", "error", err)
+			http.SetCookie(w, &http.Cookie{Name: "token", MaxAge: -1})
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
 		}
 
-		slog.Debug("invalid token", "error", lastErr)
-		http.SetCookie(w, &http.Cookie{Name: "token", MaxAge: -1})
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		ctx := context.WithValue(r.Context(), "claims", claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-type tokenCandidate struct {
-	source string
-	value  string
-}
+func (m *Middleware) CORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-func (m *Middleware) tokenCandidates(r *http.Request) []tokenCandidate {
-	tokens := make([]tokenCandidate, 0, 2)
-
-	if cookie, err := r.Cookie("token"); err == nil && cookie.Value != "" {
-		tokens = append(tokens, tokenCandidate{source: "cookie", value: cookie.Value})
-	}
-
-	if !m.debug {
-		return tokens
-	}
-
-	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
-	const bearerPrefix = "Bearer "
-	if len(authHeader) > len(bearerPrefix) && strings.EqualFold(authHeader[:len(bearerPrefix)], bearerPrefix) {
-		token := strings.TrimSpace(authHeader[len(bearerPrefix):])
-		if token != "" {
-			tokens = append(tokens, tokenCandidate{source: "authorization_header", value: token})
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
 		}
-	}
 
-	return tokens
+		next.ServeHTTP(w, r)
+	})
 }

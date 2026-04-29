@@ -28,11 +28,11 @@ func NewSaleHandler(useCase SaleUseCase) *SaleHandler {
 // @Summary Получить детализацию продаж
 // @Description Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.
 // @Description Запрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.
-// @Description Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`; в DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+// @Description Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.
 // @Tags Товары
 // @Accept json
 // @Produce json
-// @Security BearerAuth
+// @Security CookieAuth
 // @Param request body request.DetailsSaleRequest true "Необязательный фильтр по датам. Примеры значений указаны в схеме."
 // @Success 200 {array} model.SaleDetail "Строки детализации продаж"
 // @Failure 400 {string} string "Некорректное тело запроса"

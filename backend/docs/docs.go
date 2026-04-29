@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
-                "description": "Проверяет email и пароль пользователя.\nПри успехе устанавливает JWT в HttpOnly cookie с именем ` + "`" + `token` + "`" + `.\nЗащищённые маршруты используют cookie ` + "`" + `token` + "`" + `; в DEBUG режиме также принимается заголовок ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
+                "description": "Проверяет email и пароль пользователя.\nПри успехе устанавливает JWT в HttpOnly cookie с именем ` + "`" + `token` + "`" + `.\nЗащищённые маршруты используют только cookie ` + "`" + `token` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest"
+                            "$ref": "#/definitions/request.LoginRequest"
                         }
                     }
                 ],
@@ -87,7 +87,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest"
+                            "$ref": "#/definitions/request.NewUserRequest"
                         }
                     }
                 ],
@@ -95,7 +95,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Профиль созданного пользователя",
                         "schema": {
-                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
+                            "$ref": "#/definitions/response.UserResponse"
                         }
                     },
                     "400": {
@@ -117,10 +117,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Возвращает профиль пользователя, определённого по JWT claims.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
+                "description": "Возвращает профиль пользователя, определённого по JWT claims.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login.",
                 "produces": [
                     "application/json"
                 ],
@@ -132,7 +132,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Профиль текущего пользователя",
                         "schema": {
-                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
+                            "$ref": "#/definitions/response.UserResponse"
                         }
                     },
                     "401": {
@@ -152,10 +152,10 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Обновляет email и/или полное имя текущего пользователя.\nВсе поля необязательные. Если поле не передано, прежнее значение сохраняется.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
+                "description": "Обновляет email и/или полное имя текущего пользователя.\nВсе поля необязательные. Если поле не передано, прежнее значение сохраняется.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login.",
                 "consumes": [
                     "application/json"
                 ],
@@ -173,7 +173,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest"
+                            "$ref": "#/definitions/request.UserUpdateRequest"
                         }
                     }
                 ],
@@ -181,7 +181,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Обновлённый профиль пользователя",
                         "schema": {
-                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
+                            "$ref": "#/definitions/response.UserResponse"
                         }
                     },
                     "400": {
@@ -229,10 +229,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Скачивает отчёт по аналитике ассортимента в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Категория` + "`" + `, ` + "`" + `Выручка` + "`" + `, ` + "`" + `Объём продаж` + "`" + `, ` + "`" + `Группа ABC/XYZ` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `category` + "`" + `, ` + "`" + `revenue` + "`" + `, ` + "`" + `quantity` + "`" + `, ` + "`" + `abc_xyz_group` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `. Формат имени файла: ` + "`" + `assortment_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `assortment_YYYY-MM-DD.xml` + "`" + `.",
+                "description": "Скачивает отчёт по аналитике ассортимента в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Категория` + "`" + `, ` + "`" + `Выручка` + "`" + `, ` + "`" + `Объём продаж` + "`" + `, ` + "`" + `Группа ABC/XYZ` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `category` + "`" + `, ` + "`" + `revenue` + "`" + `, ` + "`" + `quantity` + "`" + `, ` + "`" + `abc_xyz_group` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. Формат имени файла: ` + "`" + `assortment_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `assortment_YYYY-MM-DD.xml` + "`" + `.",
                 "produces": [
                     "text/csv",
                     "application/xml"
@@ -286,10 +286,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Прогноз продаж` + "`" + `, ` + "`" + `Рекомендуемый запас` + "`" + `, ` + "`" + `Текущий остаток` + "`" + `, ` + "`" + `Статус` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `forecast_total` + "`" + `, ` + "`" + `recommend_order` + "`" + `, ` + "`" + `current_stock` + "`" + `, ` + "`" + `urgency` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `. Формат имени файла: ` + "`" + `forecast_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `forecast_YYYY-MM-DD.xml` + "`" + `.",
+                "description": "Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Прогноз продаж` + "`" + `, ` + "`" + `Рекомендуемый запас` + "`" + `, ` + "`" + `Текущий остаток` + "`" + `, ` + "`" + `Статус` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `forecast_total` + "`" + `, ` + "`" + `recommend_order` + "`" + `, ` + "`" + `current_stock` + "`" + `, ` + "`" + `urgency` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. Формат имени файла: ` + "`" + `forecast_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `forecast_YYYY-MM-DD.xml` + "`" + `.",
                 "produces": [
                     "text/csv",
                     "application/xml"
@@ -361,10 +361,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Строит прогноз спроса по каждому товару на указанный горизонт.\nСервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.\nМетод прогноза может быть ` + "`" + `ARIMA(7,1,1)` + "`" + `, ` + "`" + `mean_fallback` + "`" + ` или ` + "`" + `no_data` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
+                "description": "Строит прогноз спроса по каждому товару на указанный горизонт.\nСервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.\nМетод прогноза может быть ` + "`" + `ARIMA(7,1,1)` + "`" + `, ` + "`" + `mean_fallback` + "`" + ` или ` + "`" + `no_data` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -398,7 +398,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail"
+                                "$ref": "#/definitions/model.ForecastDetail"
                             }
                         }
                     },
@@ -421,10 +421,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.\nИспользуется для графиков и верхнеуровневого планирования выручки.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
+                "description": "Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.\nИспользуется для графиков и верхнеуровневого планирования выручки.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -458,7 +458,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint"
+                                "$ref": "#/definitions/model.MonthlyPoint"
                             }
                         }
                     },
@@ -481,10 +481,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Возвращает товары, у которых прогнозный спрос превышает текущий остаток.\n` + "`" + `recommend_order` + "`" + ` равен прогнозному спросу минус текущий остаток.\n` + "`" + `urgency` + "`" + ` зависит от запаса в днях: ` + "`" + `high` + "`" + ` \u003c= 7 дней, ` + "`" + `medium` + "`" + ` \u003c= 14 дней, иначе ` + "`" + `ok` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
+                "description": "Возвращает товары, у которых прогнозный спрос превышает текущий остаток.\n` + "`" + `recommend_order` + "`" + ` равен прогнозному спросу минус текущий остаток.\n` + "`" + `urgency` + "`" + ` зависит от запаса в днях: ` + "`" + `high` + "`" + ` \u003c= 7 дней, ` + "`" + `medium` + "`" + ` \u003c= 14 дней, иначе ` + "`" + `ok` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -518,7 +518,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem"
+                                "$ref": "#/definitions/model.RecommendationItem"
                             }
                         }
                     },
@@ -541,10 +541,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.\nЗапрос использует JSON body с необязательными датами ` + "`" + `from` + "`" + ` и ` + "`" + `to` + "`" + ` в формате ` + "`" + `YYYY-MM-DD` + "`" + `.\nПустое тело ` + "`" + `{}` + "`" + ` возвращает все доступные продажи. Требует валидную cookie ` + "`" + `token` + "`" + `; в DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
+                "description": "Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.\nЗапрос использует JSON body с необязательными датами ` + "`" + `from` + "`" + ` и ` + "`" + `to` + "`" + ` в формате ` + "`" + `YYYY-MM-DD` + "`" + `.\nПустое тело ` + "`" + `{}` + "`" + ` возвращает все доступные продажи. Требует валидную cookie ` + "`" + `token` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -562,7 +562,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest"
+                            "$ref": "#/definitions/request.DetailsSaleRequest"
                         }
                     }
                 ],
@@ -572,7 +572,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail"
+                                "$ref": "#/definitions/model.SaleDetail"
                             }
                         }
                     },
@@ -599,7 +599,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint": {
+        "model.DailyPoint": {
             "type": "object",
             "properties": {
                 "date": {
@@ -612,7 +612,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail": {
+        "model.ForecastDetail": {
             "type": "object",
             "properties": {
                 "daily_avg": {
@@ -622,7 +622,7 @@ const docTemplate = `{
                 "daily_breakdown": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint"
+                        "$ref": "#/definitions/model.DailyPoint"
                     }
                 },
                 "forecast_total": {
@@ -648,7 +648,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint": {
+        "model.MonthlyPoint": {
             "type": "object",
             "properties": {
                 "forecast_qty": {
@@ -665,7 +665,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem": {
+        "model.RecommendationItem": {
             "type": "object",
             "properties": {
                 "current_stock": {
@@ -707,7 +707,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail": {
+        "model.SaleDetail": {
             "type": "object",
             "properties": {
                 "category": {
@@ -732,7 +732,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest": {
+        "request.DetailsSaleRequest": {
             "type": "object",
             "properties": {
                 "from": {
@@ -747,7 +747,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest": {
+        "request.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -766,7 +766,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest": {
+        "request.NewUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -794,7 +794,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest": {
+        "request.UserUpdateRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -811,7 +811,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse": {
+        "response.UserResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -851,10 +851,10 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Только для DEBUG режима. Введите: Bearer {token}",
+        "CookieAuth": {
+            "description": "Cookie авторизации. Формат: token={jwt}",
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "Cookie",
             "in": "header"
         }
     }
@@ -867,7 +867,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{"http"},
 	Title:            "API Analysis Pro",
-	Description:      "REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.\n\nСхема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. В DEBUG режиме также можно передавать `Authorization: Bearer <jwt>`.\nSwagger UI доступен только при `DEBUG=true`: `/swagger`, JSON спецификация — `/swagger/doc.json`.",
+	Description:      "REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.\n\nСхема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. Защищённые маршруты читают JWT только из cookie.\nSwagger UI доступен только при `DEBUG=true`: `/swagger`, JSON спецификация — `/swagger/doc.json`.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

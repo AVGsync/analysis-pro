@@ -8,14 +8,14 @@ import (
 // @version 1.0
 // @description REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.
 // @description
-// @description Схема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. В DEBUG режиме также можно передавать `Authorization: Bearer <jwt>`.
+// @description Схема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. Защищённые маршруты читают JWT только из cookie.
 // @description Swagger UI доступен только при `DEBUG=true`: `/swagger`, JSON спецификация — `/swagger/doc.json`.
 // @BasePath /api
 // @schemes http
-// @securityDefinitions.apikey BearerAuth
+// @securityDefinitions.apikey CookieAuth
 // @in header
-// @name Authorization
-// @description Только для DEBUG режима. Введите: Bearer {token}
+// @name Cookie
+// @description Cookie авторизации. Формат: token={jwt}
 func main() {
 	config, err := apiserver.NewConfig()
 	if err != nil {

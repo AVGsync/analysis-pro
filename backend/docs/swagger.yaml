@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint:
+  model.DailyPoint:
     properties:
       date:
         example: "2026-05-01"
@@ -9,14 +9,14 @@ definitions:
         example: 3
         type: integer
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail:
+  model.ForecastDetail:
     properties:
       daily_avg:
         example: 1.27
         type: number
       daily_breakdown:
         items:
-          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint'
+          $ref: '#/definitions/model.DailyPoint'
         type: array
       forecast_total:
         example: 38
@@ -36,7 +36,7 @@ definitions:
         example: PHONE-IPHONE-15
         type: string
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint:
+  model.MonthlyPoint:
     properties:
       forecast_qty:
         example: 143
@@ -48,7 +48,7 @@ definitions:
         example: "2026-05-01"
         type: string
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem:
+  model.RecommendationItem:
     properties:
       current_stock:
         example: 6
@@ -79,7 +79,7 @@ definitions:
         example: high
         type: string
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail:
+  model.SaleDetail:
     properties:
       category:
         example: Смартфоны
@@ -97,7 +97,7 @@ definitions:
         example: "2026-04-29T00:00:00Z"
         type: string
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest:
+  request.DetailsSaleRequest:
     properties:
       from:
         description: Начало периода включительно в формате YYYY-MM-DD. Пустое значение
@@ -110,7 +110,7 @@ definitions:
         example: "2026-04-30"
         type: string
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest:
+  request.LoginRequest:
     properties:
       email:
         description: Email зарегистрированного пользователя.
@@ -124,7 +124,7 @@ definitions:
     - email
     - password
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest:
+  request.NewUserRequest:
     properties:
       email:
         description: Уникальный email, используется для входа.
@@ -146,7 +146,7 @@ definitions:
     - full_name
     - password
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest:
+  request.UserUpdateRequest:
     properties:
       email:
         description: Новый email. Если поле не передано, текущее значение не меняется.
@@ -160,7 +160,7 @@ definitions:
         minLength: 3
         type: string
     type: object
-  github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse:
+  response.UserResponse:
     properties:
       email:
         example: ivan.petrov@example.com
@@ -193,7 +193,7 @@ info:
   description: |-
     REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.
 
-    Схема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. В DEBUG режиме также можно передавать `Authorization: Bearer <jwt>`.
+    Схема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. Защищённые маршруты читают JWT только из cookie.
     Swagger UI доступен только при `DEBUG=true`: `/swagger`, JSON спецификация — `/swagger/doc.json`.
   title: API Analysis Pro
   version: "1.0"
@@ -205,14 +205,14 @@ paths:
       description: |-
         Проверяет email и пароль пользователя.
         При успехе устанавливает JWT в HttpOnly cookie с именем `token`.
-        Защищённые маршруты используют cookie `token`; в DEBUG режиме также принимается заголовок `Authorization: Bearer <jwt>`.
+        Защищённые маршруты используют только cookie `token`.
       parameters:
       - description: 'Данные входа: email и пароль. Примеры значений указаны в схеме.'
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest'
+          $ref: '#/definitions/request.LoginRequest'
       produces:
       - text/plain
       responses:
@@ -251,14 +251,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest'
+          $ref: '#/definitions/request.NewUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Профиль созданного пользователя
           schema:
-            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
+            $ref: '#/definitions/response.UserResponse'
         "400":
           description: Некорректное тело запроса
           schema:
@@ -274,14 +274,14 @@ paths:
     get:
       description: |-
         Возвращает профиль пользователя, определённого по JWT claims.
-        Требует валидную cookie `token`, полученную через /auth/login. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+        Требует валидную cookie `token`, полученную через /auth/login.
       produces:
       - application/json
       responses:
         "200":
           description: Профиль текущего пользователя
           schema:
-            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
+            $ref: '#/definitions/response.UserResponse'
         "401":
           description: Пользователь не авторизован
           schema:
@@ -291,7 +291,7 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Получить профиль текущего пользователя
       tags:
       - Пользователи
@@ -301,7 +301,7 @@ paths:
       description: |-
         Обновляет email и/или полное имя текущего пользователя.
         Все поля необязательные. Если поле не передано, прежнее значение сохраняется.
-        Требует валидную cookie `token`, полученную через /auth/login. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+        Требует валидную cookie `token`, полученную через /auth/login.
       parameters:
       - description: 'Данные обновления профиля: email и/или полное имя. Примеры значений
           указаны в схеме.'
@@ -309,14 +309,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest'
+          $ref: '#/definitions/request.UserUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Обновлённый профиль пользователя
           schema:
-            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
+            $ref: '#/definitions/response.UserResponse'
         "400":
           description: Некорректное тело запроса
           schema:
@@ -330,7 +330,7 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Обновить профиль текущего пользователя
       tags:
       - Пользователи
@@ -355,7 +355,7 @@ paths:
         Скачивает отчёт по аналитике ассортимента в формате CSV или XML.
         Колонки CSV: `Товар`, `SKU`, `Категория`, `Выручка`, `Объём продаж`, `Группа ABC/XYZ`.
         Поля элемента XML: `name`, `sku`, `category`, `revenue`, `quantity`, `abc_xyz_group`.
-        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`. Формат имени файла: `assortment_YYYY-MM-DD.csv` или `assortment_YYYY-MM-DD.xml`.
+        Требует валидную cookie `token`. Формат имени файла: `assortment_YYYY-MM-DD.csv` или `assortment_YYYY-MM-DD.xml`.
       parameters:
       - default: csv
         description: Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml`
@@ -387,7 +387,7 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Экспортировать аналитику ассортимента
       tags:
       - Экспорт
@@ -397,7 +397,7 @@ paths:
         Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.
         Колонки CSV: `Товар`, `SKU`, `Прогноз продаж`, `Рекомендуемый запас`, `Текущий остаток`, `Статус`.
         Поля элемента XML: `name`, `sku`, `forecast_total`, `recommend_order`, `current_stock`, `urgency`.
-        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`. Формат имени файла: `forecast_YYYY-MM-DD.csv` или `forecast_YYYY-MM-DD.xml`.
+        Требует валидную cookie `token`. Формат имени файла: `forecast_YYYY-MM-DD.csv` или `forecast_YYYY-MM-DD.xml`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -443,7 +443,7 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Экспортировать рекомендации прогноза
       tags:
       - Экспорт
@@ -453,7 +453,7 @@ paths:
         Строит прогноз спроса по каждому товару на указанный горизонт.
         Сервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.
         Метод прогноза может быть `ARIMA(7,1,1)`, `mean_fallback` или `no_data`.
-        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+        Требует валидную cookie `token`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -476,7 +476,7 @@ paths:
           description: Прогноз по каждому товару с разбивкой по дням
           schema:
             items:
-              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail'
+              $ref: '#/definitions/model.ForecastDetail'
             type: array
         "401":
           description: Пользователь не авторизован
@@ -487,7 +487,7 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Получить прогноз продаж по товарам
       tags:
       - Прогноз
@@ -496,7 +496,7 @@ paths:
       description: |-
         Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.
         Используется для графиков и верхнеуровневого планирования выручки.
-        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+        Требует валидную cookie `token`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -519,7 +519,7 @@ paths:
           description: Итоги прогноза, сгруппированные по месяцам
           schema:
             items:
-              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint'
+              $ref: '#/definitions/model.MonthlyPoint'
             type: array
         "401":
           description: Пользователь не авторизован
@@ -530,7 +530,7 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Получить помесячный прогноз
       tags:
       - Прогноз
@@ -540,7 +540,7 @@ paths:
         Возвращает товары, у которых прогнозный спрос превышает текущий остаток.
         `recommend_order` равен прогнозному спросу минус текущий остаток.
         `urgency` зависит от запаса в днях: `high` <= 7 дней, `medium` <= 14 дней, иначе `ok`.
-        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+        Требует валидную cookie `token`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -563,7 +563,7 @@ paths:
           description: Список рекомендаций по закупкам, отсортированный по срочности
           schema:
             items:
-              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem'
+              $ref: '#/definitions/model.RecommendationItem'
             type: array
         "401":
           description: Пользователь не авторизован
@@ -574,7 +574,7 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Получить рекомендации по закупкам
       tags:
       - Прогноз
@@ -585,14 +585,14 @@ paths:
       description: |-
         Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.
         Запрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.
-        Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`; в DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+        Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.
       parameters:
       - description: Необязательный фильтр по датам. Примеры значений указаны в схеме.
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest'
+          $ref: '#/definitions/request.DetailsSaleRequest'
       produces:
       - application/json
       responses:
@@ -600,7 +600,7 @@ paths:
           description: Строки детализации продаж
           schema:
             items:
-              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail'
+              $ref: '#/definitions/model.SaleDetail'
             type: array
         "400":
           description: Некорректное тело запроса
@@ -615,16 +615,16 @@ paths:
           schema:
             type: string
       security:
-      - BearerAuth: []
+      - CookieAuth: []
       summary: Получить детализацию продаж
       tags:
       - Товары
 schemes:
 - http
 securityDefinitions:
-  BearerAuth:
-    description: 'Только для DEBUG режима. Введите: Bearer {token}'
+  CookieAuth:
+    description: 'Cookie авторизации. Формат: token={jwt}'
     in: header
-    name: Authorization
+    name: Cookie
     type: apiKey
 swagger: "2.0"

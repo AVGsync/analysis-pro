@@ -101,7 +101,7 @@ func (s *APIServer) configureRouter() {
 	forecastHandler := handler.NewForecastHandler(forecastService)
 	exportHandler := handler.NewExportHandler(exportService)
 
-	middleware := middleware.NewMiddleware(jwtManager, s.config.Debug)
+	middleware := middleware.NewMiddleware(jwtManager)
 
 	if s.config.Debug {
 		s.router.Get("/swagger", func(w http.ResponseWriter, r *http.Request) {
@@ -112,6 +112,7 @@ func (s *APIServer) configureRouter() {
 	}
 
 	s.router.Route("/api", func(r chi.Router) {
+		r.Use(middleware.CORS)
 		r.Use(middleware.Trace)
 
 		r.Get("/ping", ping)

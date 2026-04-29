@@ -65,7 +65,7 @@ func (h *UserHandler) RegisterNewUser() http.HandlerFunc {
 // @Summary Войти в аккаунт
 // @Description Проверяет email и пароль пользователя.
 // @Description При успехе устанавливает JWT в HttpOnly cookie с именем `token`.
-// @Description Защищённые маршруты используют cookie `token`; в DEBUG режиме также принимается заголовок `Authorization: Bearer <jwt>`.
+// @Description Защищённые маршруты используют только cookie `token`.
 // @Tags Авторизация
 // @Accept json
 // @Produce plain
@@ -107,10 +107,10 @@ func (h *UserHandler) LoginUser() http.HandlerFunc {
 //
 // @Summary Получить профиль текущего пользователя
 // @Description Возвращает профиль пользователя, определённого по JWT claims.
-// @Description Требует валидную cookie `token`, полученную через /auth/login. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+// @Description Требует валидную cookie `token`, полученную через /auth/login.
 // @Tags Пользователи
 // @Produce json
-// @Security BearerAuth
+// @Security CookieAuth
 // @Success 200 {object} response.UserResponse "Профиль текущего пользователя"
 // @Failure 401 {string} string "Пользователь не авторизован"
 // @Failure 500 {string} string "Claims не найдены в контексте"
@@ -140,11 +140,11 @@ func (h *UserHandler) GetMe() http.HandlerFunc {
 // @Summary Обновить профиль текущего пользователя
 // @Description Обновляет email и/или полное имя текущего пользователя.
 // @Description Все поля необязательные. Если поле не передано, прежнее значение сохраняется.
-// @Description Требует валидную cookie `token`, полученную через /auth/login. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
+// @Description Требует валидную cookie `token`, полученную через /auth/login.
 // @Tags Пользователи
 // @Accept json
 // @Produce json
-// @Security BearerAuth
+// @Security CookieAuth
 // @Param request body request.UserUpdateRequest true "Данные обновления профиля: email и/или полное имя. Примеры значений указаны в схеме."
 // @Success 200 {object} response.UserResponse "Обновлённый профиль пользователя"
 // @Failure 400 {string} string "Некорректное тело запроса"
