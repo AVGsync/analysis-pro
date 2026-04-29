@@ -23,6 +23,23 @@ func NewSaleHandler(useCase SaleUseCase) *SaleHandler {
 	}
 }
 
+// GetSaleDetails godoc
+//
+// @Summary Получить детализацию продаж
+// @Description Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.
+// @Description Запрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.
+// @Description Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.
+// @Tags Товары
+// @Accept json
+// @Produce json
+// @Security CookieAuth
+// @Param request body request.DetailsSaleRequest true "Необязательный фильтр по датам. Примеры значений указаны в схеме."
+// @Success 200 {array} model.SaleDetail "Строки детализации продаж"
+// @Failure 400 {string} string "Некорректное тело запроса"
+// @Failure 401 {string} string "Пользователь не авторизован"
+// @Failure 500 {string} string "Claims не найдены в контексте"
+// @Failure 500 {string} string "Не удалось получить детализацию продаж"
+// @Router /products/sell-detail [get]
 func (h *SaleHandler) GetSaleDetails() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, ok := r.Context().Value("claims").(*model.Claims)

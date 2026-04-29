@@ -11,11 +11,13 @@ import (
 
 type Config struct {
 	BindAddr string    `envconfig:"BIND_ADDR" default:":8080"`
-	LogLevel string    `envconfig:"LOG_LEVEL" default:"debug"`
+	LogLevel string    `envconfig:"LOG_LEVEL" default:"info"`
+	Debug    bool      `envconfig:"DEBUG" default:"false"`
 	JWTSecret string `envconfig:"JWT_SECRET" required:"true"`
 	TTLAccessToken  int64  `envconfig:"TTL_ACCESS_TOKEN" default:"3600"` 
 	PostgresUser		 string `envconfig:"POSTGRES_USER" default:"postgres"`
 	PostgresPassword string `envconfig:"POSTGRES_PASSWORD" default:"postgres"`
+	PostgresHost     string `envconfig:"POSTGRES_HOST" default:"localhost"`
 	PostgresPort     string `envconfig:"POSTGRES_PORT" default:"5432"`
 	PostgresDB   string `envconfig:"POSTGRES_DB" default:"analysis"`
 	ForecastHost string `envconfig:"FORECAST_HOST" default:"forecast"`
@@ -25,7 +27,8 @@ type Config struct {
 
 func (c *Config) DatabaseURL() string {
 	return fmt.Sprintf(
-		"host=localhost port=%s user=%s password=%s dbname=%s sslmode=disable",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.PostgresHost,
 		c.PostgresPort,
 		c.PostgresUser,
 		c.PostgresPassword,

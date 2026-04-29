@@ -1,4 +1,630 @@
+basePath: /api
+definitions:
+  github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint:
+    properties:
+      date:
+        example: "2026-05-01"
+        type: string
+      quantity:
+        example: 3
+        type: integer
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail:
+    properties:
+      daily_avg:
+        example: 1.27
+        type: number
+      daily_breakdown:
+        items:
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint'
+        type: array
+      forecast_total:
+        example: 38
+        type: integer
+      method:
+        description: 'Алгоритм прогноза, использованный сервисом прогнозирования:
+          ARIMA(7,1,1), mean_fallback или no_data.'
+        example: ARIMA(7,1,1)
+        type: string
+      product_id:
+        example: 4
+        type: integer
+      product_name:
+        example: iPhone 15
+        type: string
+      sku:
+        example: PHONE-IPHONE-15
+        type: string
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint:
+    properties:
+      forecast_qty:
+        example: 143
+        type: integer
+      forecast_revenue:
+        example: 8.7543215e+06
+        type: number
+      month:
+        example: "2026-05-01"
+        type: string
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem:
+    properties:
+      current_stock:
+        example: 6
+        type: integer
+      forecast_total:
+        example: 42
+        type: integer
+      product_id:
+        example: 9
+        type: integer
+      product_name:
+        example: AirPods Pro 2
+        type: string
+      recommend_order:
+        example: 36
+        type: integer
+      sku:
+        example: AUDIO-AIRPODS-PRO-2
+        type: string
+      stock_days_left:
+        example: 4
+        type: integer
+      urgency:
+        enum:
+        - high
+        - medium
+        - ok
+        example: high
+        type: string
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail:
+    properties:
+      category:
+        example: Смартфоны
+        type: string
+      product_name:
+        example: iPhone 15
+        type: string
+      quantity:
+        example: 4
+        type: integer
+      revenue:
+        example: 399996
+        type: number
+      sold_at:
+        example: "2026-04-29T00:00:00Z"
+        type: string
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest:
+    properties:
+      from:
+        description: Начало периода включительно в формате YYYY-MM-DD. Пустое значение
+          означает отсутствие нижней границы.
+        example: "2026-02-01"
+        type: string
+      to:
+        description: Конец периода включительно в формате YYYY-MM-DD. Пустое значение
+          означает отсутствие верхней границы.
+        example: "2026-04-30"
+        type: string
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest:
+    properties:
+      email:
+        description: Email зарегистрированного пользователя.
+        example: ivan.petrov@example.com
+        type: string
+      password:
+        description: Пароль пользователя.
+        example: Str0ngPass!2026
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest:
+    properties:
+      email:
+        description: Уникальный email, используется для входа.
+        example: ivan.petrov@example.com
+        type: string
+      full_name:
+        description: Полное имя пользователя, отображается в профиле.
+        example: Иван Петров
+        maxLength: 64
+        minLength: 3
+        type: string
+      password:
+        description: Пароль, минимум 8 символов.
+        example: Str0ngPass!2026
+        minLength: 8
+        type: string
+    required:
+    - email
+    - full_name
+    - password
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest:
+    properties:
+      email:
+        description: Новый email. Если поле не передано, текущее значение не меняется.
+        example: ivan.new@example.com
+        type: string
+      full_name:
+        description: Новое полное имя. Если поле не передано, текущее значение не
+          меняется.
+        example: Иван Сергеевич Петров
+        maxLength: 64
+        minLength: 3
+        type: string
+    type: object
+  github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse:
+    properties:
+      email:
+        example: ivan.petrov@example.com
+        type: string
+      full_name:
+        example: Иван Петров
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      role:
+        enum:
+        - user
+        - admin
+        example: user
+        type: string
+      subscription_expires:
+        example: "2026-12-31T23:59:59Z"
+        type: string
+      subscription_plan:
+        enum:
+        - free
+        - pro
+        - enterprise
+        example: free
+        type: string
+    type: object
 info:
   contact: {}
-paths: {}
+  description: |-
+    REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.
+
+    Схема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. Защищённые маршруты требуют заголовок `Cookie: token=<jwt>`.
+    Swagger UI доступен по `/swagger`, JSON спецификация — по `/swagger/doc.json`.
+  title: API Analysis Pro
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Проверяет email и пароль пользователя.
+        При успехе устанавливает JWT в HttpOnly cookie с именем `token`.
+        Защищённые маршруты требуют заголовок cookie: `Cookie: token=<jwt>`.
+      parameters:
+      - description: 'Данные входа: email и пароль. Примеры значений указаны в схеме.'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          headers:
+            Set-Cookie:
+              description: token=<jwt>; HttpOnly; Secure; SameSite=Strict; Path=/;
+                Max-Age=86400
+              type: string
+          schema:
+            type: string
+        "400":
+          description: Некорректное тело запроса
+          schema:
+            type: string
+        "401":
+          description: Неверный email или пароль
+          schema:
+            type: string
+      summary: Войти в аккаунт
+      tags:
+      - Авторизация
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Создаёт аккаунт по полному имени, email и паролю.
+        Email должен быть уникальным. Пароль хранится в виде хеша и никогда не возвращается в ответе.
+        При успехе возвращает профиль созданного пользователя без токена; после регистрации вызовите /auth/login.
+      parameters:
+      - description: 'Данные регистрации: полное имя, email и пароль. Примеры значений
+          указаны в схеме.'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль созданного пользователя
+          schema:
+            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
+        "400":
+          description: Некорректное тело запроса
+          schema:
+            type: string
+        "500":
+          description: Не удалось зарегистрировать пользователя
+          schema:
+            type: string
+      summary: Зарегистрировать нового пользователя
+      tags:
+      - Авторизация
+  /me:
+    get:
+      description: |-
+        Возвращает профиль пользователя, определённого по JWT claims.
+        Требует валидную cookie `token`, полученную через /auth/login.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль текущего пользователя
+          schema:
+            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось получить пользователя
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Получить профиль текущего пользователя
+      tags:
+      - Пользователи
+    patch:
+      consumes:
+      - application/json
+      description: |-
+        Обновляет email и/или полное имя текущего пользователя.
+        Все поля необязательные. Если поле не передано, прежнее значение сохраняется.
+        Требует валидную cookie `token`, полученную через /auth/login.
+      parameters:
+      - description: 'Данные обновления профиля: email и/или полное имя. Примеры значений
+          указаны в схеме.'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Обновлённый профиль пользователя
+          schema:
+            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
+        "400":
+          description: Некорректное тело запроса
+          schema:
+            type: string
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось обновить пользователя
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Обновить профиль текущего пользователя
+      tags:
+      - Пользователи
+  /ping:
+    get:
+      description: |-
+        Лёгкая проверка маршрутизации API сервера.
+        Не проверяет доступность PostgreSQL и сервиса прогнозирования.
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: pong
+          schema:
+            type: string
+      summary: Проверить доступность API сервера
+      tags:
+      - Система
+  /products/export/assortment:
+    get:
+      description: |-
+        Скачивает отчёт по аналитике ассортимента в формате CSV или XML.
+        Колонки CSV: `Товар`, `SKU`, `Категория`, `Выручка`, `Объём продаж`, `Группа ABC/XYZ`.
+        Поля элемента XML: `name`, `sku`, `category`, `revenue`, `quantity`, `abc_xyz_group`.
+        Требует валидную cookie `token`. Формат имени файла: `assortment_YYYY-MM-DD.csv` или `assortment_YYYY-MM-DD.xml`.
+      parameters:
+      - default: csv
+        description: Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml`
+          возвращает XML.
+        enum:
+        - csv
+        - xml
+        in: query
+        name: type
+        type: string
+      produces:
+      - text/csv
+      - application/xml
+      responses:
+        "200":
+          description: Файл экспорта ассортимента
+          headers:
+            Content-Disposition:
+              description: attachment; filename=\"assortment_2026-04-29.csv\
+              type: string
+          schema:
+            type: file
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось получить данные ассортимента
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Экспортировать аналитику ассортимента
+      tags:
+      - Экспорт
+  /products/export/forecast:
+    get:
+      description: |-
+        Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.
+        Колонки CSV: `Товар`, `SKU`, `Прогноз продаж`, `Рекомендуемый запас`, `Текущий остаток`, `Статус`.
+        Поля элемента XML: `name`, `sku`, `forecast_total`, `recommend_order`, `current_stock`, `urgency`.
+        Требует валидную cookie `token`. Формат имени файла: `forecast_YYYY-MM-DD.csv` или `forecast_YYYY-MM-DD.xml`.
+      parameters:
+      - default: 30
+        description: 'Горизонт прогноза в днях. По умолчанию: 30.'
+        in: query
+        maximum: 365
+        minimum: 1
+        name: days
+        type: integer
+      - default: 90
+        description: 'Период истории продаж в днях. По умолчанию: 90.'
+        in: query
+        maximum: 730
+        minimum: 1
+        name: history
+        type: integer
+      - default: csv
+        description: Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml`
+          возвращает XML.
+        enum:
+        - csv
+        - xml
+        in: query
+        name: type
+        type: string
+      produces:
+      - text/csv
+      - application/xml
+      responses:
+        "200":
+          description: Файл экспорта прогноза
+          headers:
+            Content-Disposition:
+              description: attachment; filename=\"forecast_2026-04-29.csv\
+              type: string
+          schema:
+            type: file
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось получить данные прогноза
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Экспортировать рекомендации прогноза
+      tags:
+      - Экспорт
+  /products/forecast:
+    get:
+      description: |-
+        Строит прогноз спроса по каждому товару на указанный горизонт.
+        Сервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.
+        Метод прогноза может быть `ARIMA(7,1,1)`, `mean_fallback` или `no_data`.
+        Требует валидную cookie `token`.
+      parameters:
+      - default: 30
+        description: 'Горизонт прогноза в днях. По умолчанию: 30.'
+        in: query
+        maximum: 365
+        minimum: 1
+        name: days
+        type: integer
+      - default: 90
+        description: 'Период истории продаж в днях. По умолчанию: 90.'
+        in: query
+        maximum: 730
+        minimum: 1
+        name: history
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Прогноз по каждому товару с разбивкой по дням
+          schema:
+            items:
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail'
+            type: array
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось получить прогноз
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Получить прогноз продаж по товарам
+      tags:
+      - Прогноз
+  /products/forecast/monthly:
+    get:
+      description: |-
+        Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.
+        Используется для графиков и верхнеуровневого планирования выручки.
+        Требует валидную cookie `token`.
+      parameters:
+      - default: 30
+        description: 'Горизонт прогноза в днях. По умолчанию: 30.'
+        in: query
+        maximum: 365
+        minimum: 1
+        name: days
+        type: integer
+      - default: 90
+        description: 'Период истории продаж в днях. По умолчанию: 90.'
+        in: query
+        maximum: 730
+        minimum: 1
+        name: history
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Итоги прогноза, сгруппированные по месяцам
+          schema:
+            items:
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint'
+            type: array
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось получить помесячный прогноз
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Получить помесячный прогноз
+      tags:
+      - Прогноз
+  /products/recommendations:
+    get:
+      description: |-
+        Возвращает товары, у которых прогнозный спрос превышает текущий остаток.
+        `recommend_order` равен прогнозному спросу минус текущий остаток.
+        `urgency` зависит от запаса в днях: `high` <= 7 дней, `medium` <= 14 дней, иначе `ok`.
+        Требует валидную cookie `token`.
+      parameters:
+      - default: 30
+        description: 'Горизонт прогноза в днях. По умолчанию: 30.'
+        in: query
+        maximum: 365
+        minimum: 1
+        name: days
+        type: integer
+      - default: 90
+        description: 'Период истории продаж в днях. По умолчанию: 90.'
+        in: query
+        maximum: 730
+        minimum: 1
+        name: history
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список рекомендаций по закупкам, отсортированный по срочности
+          schema:
+            items:
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem'
+            type: array
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось получить рекомендации
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Получить рекомендации по закупкам
+      tags:
+      - Прогноз
+  /products/sell-detail:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.
+        Запрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.
+        Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.
+      parameters:
+      - description: Необязательный фильтр по датам. Примеры значений указаны в схеме.
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Строки детализации продаж
+          schema:
+            items:
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail'
+            type: array
+        "400":
+          description: Некорректное тело запроса
+          schema:
+            type: string
+        "401":
+          description: Пользователь не авторизован
+          schema:
+            type: string
+        "500":
+          description: Не удалось получить детализацию продаж
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Получить детализацию продаж
+      tags:
+      - Товары
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: 'Введите: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

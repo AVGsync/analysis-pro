@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/AVGsync/analysis-pro/backend/internal/model"
@@ -61,21 +62,29 @@ func (m *Middleware) Trace(next http.Handler) http.Handler {
 
 func (m *Middleware) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie("token")
-		if err != nil {
+		tokenStr := ""
+
+		if cookie, err := r.Cookie("token"); err == nil {
+			tokenStr = cookie.Value
+		}
+
+		if tokenStr == "" {
+			if h := r.Header.Get("Authorization"); strings.HasPrefix(h, "Bearer ") {
+				tokenStr = strings.TrimPrefix(h, "Bearer ")
+			}
+		}
+
+		if tokenStr == "" {
+			slog.Debug("no token", "path", r.URL.Path)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			slog.Debug("no token cookie", "error", err)
 			return
 		}
 
-		claims, err := m.jwtManager.Validate(cookie.Value)
+		claims, err := m.jwtManager.Validate(tokenStr)
 		if err != nil {
-			http.SetCookie(w, &http.Cookie{
-				Name:   "token",
-				MaxAge: -1,
-			})
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			slog.Debug("invalid token", "error", err)
+			http.SetCookie(w, &http.Cookie{Name: "token", MaxAge: -1})
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 

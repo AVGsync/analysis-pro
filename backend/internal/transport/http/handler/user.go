@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/AVGsync/analysis-pro/backend/internal/model"
 	"github.com/AVGsync/analysis-pro/backend/internal/model/request"
 	"github.com/AVGsync/analysis-pro/backend/internal/model/response"
-	"github.com/AVGsync/analysis-pro/backend/internal/model"
 )
 
 type UserUseCase interface {
@@ -27,6 +27,20 @@ func NewUserHandler(useCase UserUseCase) *UserHandler {
 	}
 }
 
+// RegisterNewUser godoc
+//
+// @Summary Зарегистрировать нового пользователя
+// @Description Создаёт аккаунт по полному имени, email и паролю.
+// @Description Email должен быть уникальным. Пароль хранится в виде хеша и никогда не возвращается в ответе.
+// @Description При успехе возвращает профиль созданного пользователя без токена; после регистрации вызовите /auth/login.
+// @Tags Авторизация
+// @Accept json
+// @Produce json
+// @Param request body request.NewUserRequest true "Данные регистрации: полное имя, email и пароль. Примеры значений указаны в схеме."
+// @Success 200 {object} response.UserResponse "Профиль созданного пользователя"
+// @Failure 400 {string} string "Некорректное тело запроса"
+// @Failure 500 {string} string "Не удалось зарегистрировать пользователя"
+// @Router /auth/register [post]
 func (h *UserHandler) RegisterNewUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := &request.NewUserRequest{}
@@ -46,6 +60,21 @@ func (h *UserHandler) RegisterNewUser() http.HandlerFunc {
 	}
 }
 
+// LoginUser godoc
+//
+// @Summary Войти в аккаунт
+// @Description Проверяет email и пароль пользователя.
+// @Description При успехе устанавливает JWT в HttpOnly cookie с именем `token`.
+// @Description Защищённые маршруты требуют заголовок cookie: `Cookie: token=<jwt>`.
+// @Tags Авторизация
+// @Accept json
+// @Produce plain
+// @Param request body request.LoginRequest true "Данные входа: email и пароль. Примеры значений указаны в схеме."
+// @Success 200 {string} string "OK"
+// @Header 200 {string} Set-Cookie "token=<jwt>; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400"
+// @Failure 400 {string} string "Некорректное тело запроса"
+// @Failure 401 {string} string "Неверный email или пароль"
+// @Router /auth/login [post]
 func (h *UserHandler) LoginUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := &request.LoginRequest{}
@@ -61,19 +90,32 @@ func (h *UserHandler) LoginUser() http.HandlerFunc {
 		}
 
 		http.SetCookie(w, &http.Cookie{
-				Name:     "token",
-				Value:    token,
-				HttpOnly: true,                  
-				Secure:   true,                    
-				SameSite: http.SameSiteStrictMode, 
-				Path:     "/",
-				MaxAge:   60 * 60 * 24,            
+			Name:     "token",
+			Value:    token,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+			Path:     "/",
+			MaxAge:   60 * 60 * 24,
 		})
 
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
+// GetMe godoc
+//
+// @Summary Получить профиль текущего пользователя
+// @Description Возвращает профиль пользователя, определённого по JWT claims.
+// @Description Требует валидную cookie `token`, полученную через /auth/login.
+// @Tags Пользователи
+// @Produce json
+// @Security CookieAuth
+// @Success 200 {object} response.UserResponse "Профиль текущего пользователя"
+// @Failure 401 {string} string "Пользователь не авторизован"
+// @Failure 500 {string} string "Claims не найдены в контексте"
+// @Failure 500 {string} string "Не удалось получить пользователя"
+// @Router /me [get]
 func (h *UserHandler) GetMe() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		claims, ok := r.Context().Value("claims").(*model.Claims)
@@ -93,6 +135,23 @@ func (h *UserHandler) GetMe() http.HandlerFunc {
 	}
 }
 
+// UpdateUser godoc
+//
+// @Summary Обновить профиль текущего пользователя
+// @Description Обновляет email и/или полное имя текущего пользователя.
+// @Description Все поля необязательные. Если поле не передано, прежнее значение сохраняется.
+// @Description Требует валидную cookie `token`, полученную через /auth/login.
+// @Tags Пользователи
+// @Accept json
+// @Produce json
+// @Security CookieAuth
+// @Param request body request.UserUpdateRequest true "Данные обновления профиля: email и/или полное имя. Примеры значений указаны в схеме."
+// @Success 200 {object} response.UserResponse "Обновлённый профиль пользователя"
+// @Failure 400 {string} string "Некорректное тело запроса"
+// @Failure 401 {string} string "Пользователь не авторизован"
+// @Failure 500 {string} string "Claims не найдены в контексте"
+// @Failure 500 {string} string "Не удалось обновить пользователя"
+// @Router /me [patch]
 func (h *UserHandler) UpdateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, ok := r.Context().Value("claims").(*model.Claims)

@@ -1,5 +1,18 @@
 FROM golang:1.26-alpine
 RUN apk add --no-cache git
 RUN go install github.com/swaggo/swag/cmd/swag@v1.16.6
+
+ARG UID=1000
+ARG GID=1000
+RUN addgroup -g ${GID} swag \
+    && adduser -D -u ${UID} -G swag swag \
+    && mkdir -p /home/swag/go/pkg/mod /home/swag/.cache/go-build \
+    && chown -R swag:swag /home/swag
+
+ENV GOPATH=/home/swag/go
+ENV GOMODCACHE=/home/swag/go/pkg/mod
+ENV GOCACHE=/home/swag/.cache/go-build
+
 WORKDIR /code
+USER swag
 ENTRYPOINT ["swag"]

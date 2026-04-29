@@ -1,7 +1,857 @@
 {
+    "schemes": [
+        "http"
+    ],
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.\n\nСхема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. Защищённые маршруты требуют заголовок `Cookie: token=\u003cjwt\u003e`.\nSwagger UI доступен по `/swagger`, JSON спецификация — по `/swagger/doc.json`.",
+        "title": "API Analysis Pro",
+        "contact": {},
+        "version": "1.0"
     },
-    "paths": {}
+    "basePath": "/api",
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Проверяет email и пароль пользователя.\nПри успехе устанавливает JWT в HttpOnly cookie с именем `token`.\nЗащищённые маршруты требуют заголовок cookie: `Cookie: token=\u003cjwt\u003e`.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Авторизация"
+                ],
+                "summary": "Войти в аккаунт",
+                "parameters": [
+                    {
+                        "description": "Данные входа: email и пароль. Примеры значений указаны в схеме.",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "token=\u003cjwt\u003e; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=86400"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверный email или пароль",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Создаёт аккаунт по полному имени, email и паролю.\nEmail должен быть уникальным. Пароль хранится в виде хеша и никогда не возвращается в ответе.\nПри успехе возвращает профиль созданного пользователя без токена; после регистрации вызовите /auth/login.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Авторизация"
+                ],
+                "summary": "Зарегистрировать нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные регистрации: полное имя, email и пароль. Примеры значений указаны в схеме.",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Профиль созданного пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось зарегистрировать пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/me": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Возвращает профиль пользователя, определённого по JWT claims.\nТребует валидную cookie `token`, полученную через /auth/login.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Получить профиль текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Профиль текущего пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Обновляет email и/или полное имя текущего пользователя.\nВсе поля необязательные. Если поле не передано, прежнее значение сохраняется.\nТребует валидную cookie `token`, полученную через /auth/login.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Пользователи"
+                ],
+                "summary": "Обновить профиль текущего пользователя",
+                "parameters": [
+                    {
+                        "description": "Данные обновления профиля: email и/или полное имя. Примеры значений указаны в схеме.",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Обновлённый профиль пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось обновить пользователя",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/ping": {
+            "get": {
+                "description": "Лёгкая проверка маршрутизации API сервера.\nНе проверяет доступность PostgreSQL и сервиса прогнозирования.",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Система"
+                ],
+                "summary": "Проверить доступность API сервера",
+                "responses": {
+                    "200": {
+                        "description": "pong",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/export/assortment": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Скачивает отчёт по аналитике ассортимента в формате CSV или XML.\nКолонки CSV: `Товар`, `SKU`, `Категория`, `Выручка`, `Объём продаж`, `Группа ABC/XYZ`.\nПоля элемента XML: `name`, `sku`, `category`, `revenue`, `quantity`, `abc_xyz_group`.\nТребует валидную cookie `token`. Формат имени файла: `assortment_YYYY-MM-DD.csv` или `assortment_YYYY-MM-DD.xml`.",
+                "produces": [
+                    "text/csv",
+                    "application/xml"
+                ],
+                "tags": [
+                    "Экспорт"
+                ],
+                "summary": "Экспортировать аналитику ассортимента",
+                "parameters": [
+                    {
+                        "enum": [
+                            "csv",
+                            "xml"
+                        ],
+                        "type": "string",
+                        "default": "csv",
+                        "description": "Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml` возвращает XML.",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Файл экспорта ассортимента",
+                        "schema": {
+                            "type": "file"
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": "attachment; filename=\\\"assortment_2026-04-29.csv\\"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить данные ассортимента",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/export/forecast": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.\nКолонки CSV: `Товар`, `SKU`, `Прогноз продаж`, `Рекомендуемый запас`, `Текущий остаток`, `Статус`.\nПоля элемента XML: `name`, `sku`, `forecast_total`, `recommend_order`, `current_stock`, `urgency`.\nТребует валидную cookie `token`. Формат имени файла: `forecast_YYYY-MM-DD.csv` или `forecast_YYYY-MM-DD.xml`.",
+                "produces": [
+                    "text/csv",
+                    "application/xml"
+                ],
+                "tags": [
+                    "Экспорт"
+                ],
+                "summary": "Экспортировать рекомендации прогноза",
+                "parameters": [
+                    {
+                        "maximum": 365,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Горизонт прогноза в днях. По умолчанию: 30.",
+                        "name": "days",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 730,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 90,
+                        "description": "Период истории продаж в днях. По умолчанию: 90.",
+                        "name": "history",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "csv",
+                            "xml"
+                        ],
+                        "type": "string",
+                        "default": "csv",
+                        "description": "Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml` возвращает XML.",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Файл экспорта прогноза",
+                        "schema": {
+                            "type": "file"
+                        },
+                        "headers": {
+                            "Content-Disposition": {
+                                "type": "string",
+                                "description": "attachment; filename=\\\"forecast_2026-04-29.csv\\"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить данные прогноза",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/forecast": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Строит прогноз спроса по каждому товару на указанный горизонт.\nСервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.\nМетод прогноза может быть `ARIMA(7,1,1)`, `mean_fallback` или `no_data`.\nТребует валидную cookie `token`.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Прогноз"
+                ],
+                "summary": "Получить прогноз продаж по товарам",
+                "parameters": [
+                    {
+                        "maximum": 365,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Горизонт прогноза в днях. По умолчанию: 30.",
+                        "name": "days",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 730,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 90,
+                        "description": "Период истории продаж в днях. По умолчанию: 90.",
+                        "name": "history",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Прогноз по каждому товару с разбивкой по дням",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить прогноз",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/forecast/monthly": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.\nИспользуется для графиков и верхнеуровневого планирования выручки.\nТребует валидную cookie `token`.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Прогноз"
+                ],
+                "summary": "Получить помесячный прогноз",
+                "parameters": [
+                    {
+                        "maximum": 365,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Горизонт прогноза в днях. По умолчанию: 30.",
+                        "name": "days",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 730,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 90,
+                        "description": "Период истории продаж в днях. По умолчанию: 90.",
+                        "name": "history",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Итоги прогноза, сгруппированные по месяцам",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить помесячный прогноз",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/recommendations": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Возвращает товары, у которых прогнозный спрос превышает текущий остаток.\n`recommend_order` равен прогнозному спросу минус текущий остаток.\n`urgency` зависит от запаса в днях: `high` \u003c= 7 дней, `medium` \u003c= 14 дней, иначе `ok`.\nТребует валидную cookie `token`.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Прогноз"
+                ],
+                "summary": "Получить рекомендации по закупкам",
+                "parameters": [
+                    {
+                        "maximum": 365,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Горизонт прогноза в днях. По умолчанию: 30.",
+                        "name": "days",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 730,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 90,
+                        "description": "Период истории продаж в днях. По умолчанию: 90.",
+                        "name": "history",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список рекомендаций по закупкам, отсортированный по срочности",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить рекомендации",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/sell-detail": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.\nЗапрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.\nПустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Товары"
+                ],
+                "summary": "Получить детализацию продаж",
+                "parameters": [
+                    {
+                        "description": "Необязательный фильтр по датам. Примеры значений указаны в схеме.",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Строки детализации продаж",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Некорректное тело запроса",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось получить детализацию продаж",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string",
+                    "example": "2026-05-01"
+                },
+                "quantity": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail": {
+            "type": "object",
+            "properties": {
+                "daily_avg": {
+                    "type": "number",
+                    "example": 1.27
+                },
+                "daily_breakdown": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint"
+                    }
+                },
+                "forecast_total": {
+                    "type": "integer",
+                    "example": 38
+                },
+                "method": {
+                    "description": "Алгоритм прогноза, использованный сервисом прогнозирования: ARIMA(7,1,1), mean_fallback или no_data.",
+                    "type": "string",
+                    "example": "ARIMA(7,1,1)"
+                },
+                "product_id": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "product_name": {
+                    "type": "string",
+                    "example": "iPhone 15"
+                },
+                "sku": {
+                    "type": "string",
+                    "example": "PHONE-IPHONE-15"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint": {
+            "type": "object",
+            "properties": {
+                "forecast_qty": {
+                    "type": "integer",
+                    "example": 143
+                },
+                "forecast_revenue": {
+                    "type": "number",
+                    "example": 8754321.5
+                },
+                "month": {
+                    "type": "string",
+                    "example": "2026-05-01"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem": {
+            "type": "object",
+            "properties": {
+                "current_stock": {
+                    "type": "integer",
+                    "example": 6
+                },
+                "forecast_total": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "product_id": {
+                    "type": "integer",
+                    "example": 9
+                },
+                "product_name": {
+                    "type": "string",
+                    "example": "AirPods Pro 2"
+                },
+                "recommend_order": {
+                    "type": "integer",
+                    "example": 36
+                },
+                "sku": {
+                    "type": "string",
+                    "example": "AUDIO-AIRPODS-PRO-2"
+                },
+                "stock_days_left": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "urgency": {
+                    "type": "string",
+                    "enum": [
+                        "high",
+                        "medium",
+                        "ok"
+                    ],
+                    "example": "high"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "example": "Смартфоны"
+                },
+                "product_name": {
+                    "type": "string",
+                    "example": "iPhone 15"
+                },
+                "quantity": {
+                    "type": "integer",
+                    "example": 4
+                },
+                "revenue": {
+                    "type": "number",
+                    "example": 399996
+                },
+                "sold_at": {
+                    "type": "string",
+                    "example": "2026-04-29T00:00:00Z"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model_request.DetailsSaleRequest": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "description": "Начало периода включительно в формате YYYY-MM-DD. Пустое значение означает отсутствие нижней границы.",
+                    "type": "string",
+                    "example": "2026-02-01"
+                },
+                "to": {
+                    "description": "Конец периода включительно в формате YYYY-MM-DD. Пустое значение означает отсутствие верхней границы.",
+                    "type": "string",
+                    "example": "2026-04-30"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "description": "Email зарегистрированного пользователя.",
+                    "type": "string",
+                    "example": "ivan.petrov@example.com"
+                },
+                "password": {
+                    "description": "Пароль пользователя.",
+                    "type": "string",
+                    "example": "Str0ngPass!2026"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "full_name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "description": "Уникальный email, используется для входа.",
+                    "type": "string",
+                    "example": "ivan.petrov@example.com"
+                },
+                "full_name": {
+                    "description": "Полное имя пользователя, отображается в профиле.",
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 3,
+                    "example": "Иван Петров"
+                },
+                "password": {
+                    "description": "Пароль, минимум 8 символов.",
+                    "type": "string",
+                    "minLength": 8,
+                    "example": "Str0ngPass!2026"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Новый email. Если поле не передано, текущее значение не меняется.",
+                    "type": "string",
+                    "example": "ivan.new@example.com"
+                },
+                "full_name": {
+                    "description": "Новое полное имя. Если поле не передано, текущее значение не меняется.",
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 3,
+                    "example": "Иван Сергеевич Петров"
+                }
+            }
+        },
+        "github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "ivan.petrov@example.com"
+                },
+                "full_name": {
+                    "type": "string",
+                    "example": "Иван Петров"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "user",
+                        "admin"
+                    ],
+                    "example": "user"
+                },
+                "subscription_expires": {
+                    "type": "string",
+                    "example": "2026-12-31T23:59:59Z"
+                },
+                "subscription_plan": {
+                    "type": "string",
+                    "enum": [
+                        "free",
+                        "pro",
+                        "enterprise"
+                    ],
+                    "example": "free"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Введите: Bearer {token}",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
 }

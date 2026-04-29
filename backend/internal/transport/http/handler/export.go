@@ -25,6 +25,25 @@ func NewExportHandler(useCase ExportUseCase) *ExportHandler {
 	return &ExportHandler{useCase: useCase}
 }
 
+// ExportForecast godoc
+//
+// @Summary Экспортировать рекомендации прогноза
+// @Description Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.
+// @Description Колонки CSV: `Товар`, `SKU`, `Прогноз продаж`, `Рекомендуемый запас`, `Текущий остаток`, `Статус`.
+// @Description Поля элемента XML: `name`, `sku`, `forecast_total`, `recommend_order`, `current_stock`, `urgency`.
+// @Description Требует валидную cookie `token`. Формат имени файла: `forecast_YYYY-MM-DD.csv` или `forecast_YYYY-MM-DD.xml`.
+// @Tags Экспорт
+// @Produce text/csv,application/xml
+// @Security CookieAuth
+// @Param days query int false "Горизонт прогноза в днях. По умолчанию: 30." default(30) minimum(1) maximum(365)
+// @Param history query int false "Период истории продаж в днях. По умолчанию: 90." default(90) minimum(1) maximum(730)
+// @Param type query string false "Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml` возвращает XML." Enums(csv,xml) default(csv)
+// @Success 200 {file} file "Файл экспорта прогноза"
+// @Header 200 {string} Content-Disposition "attachment; filename=\"forecast_2026-04-29.csv\""
+// @Failure 401 {string} string "Пользователь не авторизован"
+// @Failure 500 {string} string "Claims не найдены в контексте"
+// @Failure 500 {string} string "Не удалось получить данные прогноза"
+// @Router /products/export/forecast [get]
 func (h *ExportHandler) ExportForecast() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, ok := r.Context().Value("claims").(*model.Claims)
@@ -32,10 +51,10 @@ func (h *ExportHandler) ExportForecast() http.HandlerFunc {
 			http.Error(w, "claims not found in context", http.StatusInternalServerError)
 			return
 		}
-		
+
 		days, err := strconv.Atoi(r.URL.Query().Get("days"))
 		if err != nil {
-			days = 30 
+			days = 30
 		}
 
 		history, err := strconv.Atoi(r.URL.Query().Get("history"))
@@ -59,6 +78,22 @@ func (h *ExportHandler) ExportForecast() http.HandlerFunc {
 	}
 }
 
+// ExportAssortment godoc
+//
+// @Summary Экспортировать аналитику ассортимента
+// @Description Скачивает отчёт по аналитике ассортимента в формате CSV или XML.
+// @Description Колонки CSV: `Товар`, `SKU`, `Категория`, `Выручка`, `Объём продаж`, `Группа ABC/XYZ`.
+// @Description Поля элемента XML: `name`, `sku`, `category`, `revenue`, `quantity`, `abc_xyz_group`.
+// @Description Требует валидную cookie `token`. Формат имени файла: `assortment_YYYY-MM-DD.csv` или `assortment_YYYY-MM-DD.xml`.
+// @Tags Экспорт
+// @Produce text/csv,application/xml
+// @Security CookieAuth
+// @Param type query string false "Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml` возвращает XML." Enums(csv,xml) default(csv)
+// @Success 200 {file} file "Файл экспорта ассортимента"
+// @Header 200 {string} Content-Disposition "attachment; filename=\"assortment_2026-04-29.csv\""
+// @Failure 401 {string} string "Пользователь не авторизован"
+// @Failure 500 {string} string "Не удалось получить данные ассортимента"
+// @Router /products/export/assortment [get]
 func (h *ExportHandler) ExportAssortment() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := h.useCase.GetAssortmentExport(r.Context())
