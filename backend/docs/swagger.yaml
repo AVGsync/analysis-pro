@@ -193,8 +193,8 @@ info:
   description: |-
     REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.
 
-    Схема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. Защищённые маршруты требуют заголовок `Cookie: token=<jwt>`.
-    Swagger UI доступен по `/swagger`, JSON спецификация — по `/swagger/doc.json`.
+    Схема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. В DEBUG режиме также можно передавать `Authorization: Bearer <jwt>`.
+    Swagger UI доступен только при `DEBUG=true`: `/swagger`, JSON спецификация — `/swagger/doc.json`.
   title: API Analysis Pro
   version: "1.0"
 paths:
@@ -205,7 +205,7 @@ paths:
       description: |-
         Проверяет email и пароль пользователя.
         При успехе устанавливает JWT в HttpOnly cookie с именем `token`.
-        Защищённые маршруты требуют заголовок cookie: `Cookie: token=<jwt>`.
+        Защищённые маршруты используют cookie `token`; в DEBUG режиме также принимается заголовок `Authorization: Bearer <jwt>`.
       parameters:
       - description: 'Данные входа: email и пароль. Примеры значений указаны в схеме.'
         in: body
@@ -274,7 +274,7 @@ paths:
     get:
       description: |-
         Возвращает профиль пользователя, определённого по JWT claims.
-        Требует валидную cookie `token`, полученную через /auth/login.
+        Требует валидную cookie `token`, полученную через /auth/login. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
       produces:
       - application/json
       responses:
@@ -291,7 +291,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Получить профиль текущего пользователя
       tags:
       - Пользователи
@@ -301,7 +301,7 @@ paths:
       description: |-
         Обновляет email и/или полное имя текущего пользователя.
         Все поля необязательные. Если поле не передано, прежнее значение сохраняется.
-        Требует валидную cookie `token`, полученную через /auth/login.
+        Требует валидную cookie `token`, полученную через /auth/login. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
       parameters:
       - description: 'Данные обновления профиля: email и/или полное имя. Примеры значений
           указаны в схеме.'
@@ -330,7 +330,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Обновить профиль текущего пользователя
       tags:
       - Пользователи
@@ -355,7 +355,7 @@ paths:
         Скачивает отчёт по аналитике ассортимента в формате CSV или XML.
         Колонки CSV: `Товар`, `SKU`, `Категория`, `Выручка`, `Объём продаж`, `Группа ABC/XYZ`.
         Поля элемента XML: `name`, `sku`, `category`, `revenue`, `quantity`, `abc_xyz_group`.
-        Требует валидную cookie `token`. Формат имени файла: `assortment_YYYY-MM-DD.csv` или `assortment_YYYY-MM-DD.xml`.
+        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`. Формат имени файла: `assortment_YYYY-MM-DD.csv` или `assortment_YYYY-MM-DD.xml`.
       parameters:
       - default: csv
         description: Формат экспорта. Пустое значение или `csv` возвращает CSV; `xml`
@@ -387,7 +387,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Экспортировать аналитику ассортимента
       tags:
       - Экспорт
@@ -397,7 +397,7 @@ paths:
         Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.
         Колонки CSV: `Товар`, `SKU`, `Прогноз продаж`, `Рекомендуемый запас`, `Текущий остаток`, `Статус`.
         Поля элемента XML: `name`, `sku`, `forecast_total`, `recommend_order`, `current_stock`, `urgency`.
-        Требует валидную cookie `token`. Формат имени файла: `forecast_YYYY-MM-DD.csv` или `forecast_YYYY-MM-DD.xml`.
+        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`. Формат имени файла: `forecast_YYYY-MM-DD.csv` или `forecast_YYYY-MM-DD.xml`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -443,7 +443,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Экспортировать рекомендации прогноза
       tags:
       - Экспорт
@@ -453,7 +453,7 @@ paths:
         Строит прогноз спроса по каждому товару на указанный горизонт.
         Сервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.
         Метод прогноза может быть `ARIMA(7,1,1)`, `mean_fallback` или `no_data`.
-        Требует валидную cookie `token`.
+        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -487,7 +487,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Получить прогноз продаж по товарам
       tags:
       - Прогноз
@@ -496,7 +496,7 @@ paths:
       description: |-
         Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.
         Используется для графиков и верхнеуровневого планирования выручки.
-        Требует валидную cookie `token`.
+        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -530,7 +530,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Получить помесячный прогноз
       tags:
       - Прогноз
@@ -540,7 +540,7 @@ paths:
         Возвращает товары, у которых прогнозный спрос превышает текущий остаток.
         `recommend_order` равен прогнозному спросу минус текущий остаток.
         `urgency` зависит от запаса в днях: `high` <= 7 дней, `medium` <= 14 дней, иначе `ok`.
-        Требует валидную cookie `token`.
+        Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
       parameters:
       - default: 30
         description: 'Горизонт прогноза в днях. По умолчанию: 30.'
@@ -574,7 +574,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Получить рекомендации по закупкам
       tags:
       - Прогноз
@@ -585,7 +585,7 @@ paths:
       description: |-
         Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.
         Запрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.
-        Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.
+        Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`; в DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
       parameters:
       - description: Необязательный фильтр по датам. Примеры значений указаны в схеме.
         in: body
@@ -615,7 +615,7 @@ paths:
           schema:
             type: string
       security:
-      - CookieAuth: []
+      - BearerAuth: []
       summary: Получить детализацию продаж
       tags:
       - Товары
@@ -623,7 +623,7 @@ schemes:
 - http
 securityDefinitions:
   BearerAuth:
-    description: 'Введите: Bearer {token}'
+    description: 'Только для DEBUG режима. Введите: Bearer {token}'
     in: header
     name: Authorization
     type: apiKey

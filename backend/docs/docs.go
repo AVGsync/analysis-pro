@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/auth/login": {
             "post": {
-                "description": "Проверяет email и пароль пользователя.\nПри успехе устанавливает JWT в HttpOnly cookie с именем ` + "`" + `token` + "`" + `.\nЗащищённые маршруты требуют заголовок cookie: ` + "`" + `Cookie: token=\u003cjwt\u003e` + "`" + `.",
+                "description": "Проверяет email и пароль пользователя.\nПри успехе устанавливает JWT в HttpOnly cookie с именем ` + "`" + `token` + "`" + `.\nЗащищённые маршруты используют cookie ` + "`" + `token` + "`" + `; в DEBUG режиме также принимается заголовок ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -117,10 +117,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает профиль пользователя, определённого по JWT claims.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login.",
+                "description": "Возвращает профиль пользователя, определённого по JWT claims.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -152,10 +152,10 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Обновляет email и/или полное имя текущего пользователя.\nВсе поля необязательные. Если поле не передано, прежнее значение сохраняется.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login.",
+                "description": "Обновляет email и/или полное имя текущего пользователя.\nВсе поля необязательные. Если поле не передано, прежнее значение сохраняется.\nТребует валидную cookie ` + "`" + `token` + "`" + `, полученную через /auth/login. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -229,10 +229,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Скачивает отчёт по аналитике ассортимента в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Категория` + "`" + `, ` + "`" + `Выручка` + "`" + `, ` + "`" + `Объём продаж` + "`" + `, ` + "`" + `Группа ABC/XYZ` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `category` + "`" + `, ` + "`" + `revenue` + "`" + `, ` + "`" + `quantity` + "`" + `, ` + "`" + `abc_xyz_group` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. Формат имени файла: ` + "`" + `assortment_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `assortment_YYYY-MM-DD.xml` + "`" + `.",
+                "description": "Скачивает отчёт по аналитике ассортимента в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Категория` + "`" + `, ` + "`" + `Выручка` + "`" + `, ` + "`" + `Объём продаж` + "`" + `, ` + "`" + `Группа ABC/XYZ` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `category` + "`" + `, ` + "`" + `revenue` + "`" + `, ` + "`" + `quantity` + "`" + `, ` + "`" + `abc_xyz_group` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `. Формат имени файла: ` + "`" + `assortment_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `assortment_YYYY-MM-DD.xml` + "`" + `.",
                 "produces": [
                     "text/csv",
                     "application/xml"
@@ -286,10 +286,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Прогноз продаж` + "`" + `, ` + "`" + `Рекомендуемый запас` + "`" + `, ` + "`" + `Текущий остаток` + "`" + `, ` + "`" + `Статус` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `forecast_total` + "`" + `, ` + "`" + `recommend_order` + "`" + `, ` + "`" + `current_stock` + "`" + `, ` + "`" + `urgency` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. Формат имени файла: ` + "`" + `forecast_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `forecast_YYYY-MM-DD.xml` + "`" + `.",
+                "description": "Скачивает отчёт по рекомендациям прогноза в формате CSV или XML.\nКолонки CSV: ` + "`" + `Товар` + "`" + `, ` + "`" + `SKU` + "`" + `, ` + "`" + `Прогноз продаж` + "`" + `, ` + "`" + `Рекомендуемый запас` + "`" + `, ` + "`" + `Текущий остаток` + "`" + `, ` + "`" + `Статус` + "`" + `.\nПоля элемента XML: ` + "`" + `name` + "`" + `, ` + "`" + `sku` + "`" + `, ` + "`" + `forecast_total` + "`" + `, ` + "`" + `recommend_order` + "`" + `, ` + "`" + `current_stock` + "`" + `, ` + "`" + `urgency` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `. Формат имени файла: ` + "`" + `forecast_YYYY-MM-DD.csv` + "`" + ` или ` + "`" + `forecast_YYYY-MM-DD.xml` + "`" + `.",
                 "produces": [
                     "text/csv",
                     "application/xml"
@@ -361,10 +361,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Строит прогноз спроса по каждому товару на указанный горизонт.\nСервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.\nМетод прогноза может быть ` + "`" + `ARIMA(7,1,1)` + "`" + `, ` + "`" + `mean_fallback` + "`" + ` или ` + "`" + `no_data` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
+                "description": "Строит прогноз спроса по каждому товару на указанный горизонт.\nСервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.\nМетод прогноза может быть ` + "`" + `ARIMA(7,1,1)` + "`" + `, ` + "`" + `mean_fallback` + "`" + ` или ` + "`" + `no_data` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -421,10 +421,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.\nИспользуется для графиков и верхнеуровневого планирования выручки.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
+                "description": "Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.\nИспользуется для графиков и верхнеуровневого планирования выручки.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -481,10 +481,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает товары, у которых прогнозный спрос превышает текущий остаток.\n` + "`" + `recommend_order` + "`" + ` равен прогнозному спросу минус текущий остаток.\n` + "`" + `urgency` + "`" + ` зависит от запаса в днях: ` + "`" + `high` + "`" + ` \u003c= 7 дней, ` + "`" + `medium` + "`" + ` \u003c= 14 дней, иначе ` + "`" + `ok` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
+                "description": "Возвращает товары, у которых прогнозный спрос превышает текущий остаток.\n` + "`" + `recommend_order` + "`" + ` равен прогнозному спросу минус текущий остаток.\n` + "`" + `urgency` + "`" + ` зависит от запаса в днях: ` + "`" + `high` + "`" + ` \u003c= 7 дней, ` + "`" + `medium` + "`" + ` \u003c= 14 дней, иначе ` + "`" + `ok` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `. В DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -541,10 +541,10 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "CookieAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.\nЗапрос использует JSON body с необязательными датами ` + "`" + `from` + "`" + ` и ` + "`" + `to` + "`" + ` в формате ` + "`" + `YYYY-MM-DD` + "`" + `.\nПустое тело ` + "`" + `{}` + "`" + ` возвращает все доступные продажи. Требует валидную cookie ` + "`" + `token` + "`" + `.",
+                "description": "Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.\nЗапрос использует JSON body с необязательными датами ` + "`" + `from` + "`" + ` и ` + "`" + `to` + "`" + ` в формате ` + "`" + `YYYY-MM-DD` + "`" + `.\nПустое тело ` + "`" + `{}` + "`" + ` возвращает все доступные продажи. Требует валидную cookie ` + "`" + `token` + "`" + `; в DEBUG режиме также принимается ` + "`" + `Authorization: Bearer \u003cjwt\u003e` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -852,7 +852,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "Введите: Bearer {token}",
+            "description": "Только для DEBUG режима. Введите: Bearer {token}",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -867,7 +867,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{"http"},
 	Title:            "API Analysis Pro",
-	Description:      "REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.\n\nСхема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. Защищённые маршруты требуют заголовок `Cookie: token=<jwt>`.\nSwagger UI доступен по `/swagger`, JSON спецификация — по `/swagger/doc.json`.",
+	Description:      "REST API для Analysis Pro: авторизация, профиль пользователя, детализация продаж, прогнозы по товарам, рекомендации по закупкам и экспорт CSV/XML.\n\nСхема авторизации: вызовите `POST /auth/login`; API установит HttpOnly cookie `token`. В DEBUG режиме также можно передавать `Authorization: Bearer <jwt>`.\nSwagger UI доступен только при `DEBUG=true`: `/swagger`, JSON спецификация — `/swagger/doc.json`.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

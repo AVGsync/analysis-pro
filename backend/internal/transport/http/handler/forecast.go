@@ -31,10 +31,10 @@ func NewForecastHandler(useCase ForecastUseCase) *ForecastHandler {
 // @Description Строит прогноз спроса по каждому товару на указанный горизонт.
 // @Description Сервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.
 // @Description Метод прогноза может быть `ARIMA(7,1,1)`, `mean_fallback` или `no_data`.
-// @Description Требует валидную cookie `token`.
+// @Description Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
 // @Tags Прогноз
 // @Produce json
-// @Security CookieAuth
+// @Security BearerAuth
 // @Param days query int false "Горизонт прогноза в днях. По умолчанию: 30." default(30) minimum(1) maximum(365)
 // @Param history query int false "Период истории продаж в днях. По умолчанию: 90." default(90) minimum(1) maximum(730)
 // @Success 200 {array} model.ForecastDetail "Прогноз по каждому товару с разбивкой по дням"
@@ -77,10 +77,10 @@ func (h *ForecastHandler) GetForecast() http.HandlerFunc {
 // @Description Возвращает товары, у которых прогнозный спрос превышает текущий остаток.
 // @Description `recommend_order` равен прогнозному спросу минус текущий остаток.
 // @Description `urgency` зависит от запаса в днях: `high` <= 7 дней, `medium` <= 14 дней, иначе `ok`.
-// @Description Требует валидную cookie `token`.
+// @Description Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
 // @Tags Прогноз
 // @Produce json
-// @Security CookieAuth
+// @Security BearerAuth
 // @Param days query int false "Горизонт прогноза в днях. По умолчанию: 30." default(30) minimum(1) maximum(365)
 // @Param history query int false "Период истории продаж в днях. По умолчанию: 90." default(90) minimum(1) maximum(730)
 // @Success 200 {array} model.RecommendationItem "Список рекомендаций по закупкам, отсортированный по срочности"
@@ -122,10 +122,10 @@ func (h *ForecastHandler) GetRecommendations() http.HandlerFunc {
 // @Summary Получить помесячный прогноз
 // @Description Агрегирует прогнозное количество продаж и прогнозную выручку по месяцам.
 // @Description Используется для графиков и верхнеуровневого планирования выручки.
-// @Description Требует валидную cookie `token`.
+// @Description Требует валидную cookie `token`. В DEBUG режиме также принимается `Authorization: Bearer <jwt>`.
 // @Tags Прогноз
 // @Produce json
-// @Security CookieAuth
+// @Security BearerAuth
 // @Param days query int false "Горизонт прогноза в днях. По умолчанию: 30." default(30) minimum(1) maximum(365)
 // @Param history query int false "Период истории продаж в днях. По умолчанию: 90." default(90) minimum(1) maximum(730)
 // @Success 200 {array} model.MonthlyPoint "Итоги прогноза, сгруппированные по месяцам"

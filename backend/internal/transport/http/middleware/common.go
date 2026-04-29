@@ -28,13 +28,15 @@ type JWTManager interface {
 	Validate(tokenStr string) (*model.Claims, error)
 }
 
-type Middleware struct{
+type Middleware struct {
 	jwtManager JWTManager
+	debug      bool
 }
 
-func NewMiddleware(jwtmanager JWTManager) *Middleware {
+func NewMiddleware(jwtmanager JWTManager, debug bool) *Middleware {
 	return &Middleware{
 		jwtManager: jwtmanager,
+		debug:      debug,
 	}
 }
 
@@ -62,33 +64,55 @@ func (m *Middleware) Trace(next http.Handler) http.Handler {
 
 func (m *Middleware) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenStr := ""
-
-		if cookie, err := r.Cookie("token"); err == nil {
-			tokenStr = cookie.Value
-		}
-
-		if tokenStr == "" {
-			if h := r.Header.Get("Authorization"); strings.HasPrefix(h, "Bearer ") {
-				tokenStr = strings.TrimPrefix(h, "Bearer ")
-			}
-		}
-
-		if tokenStr == "" {
+		tokens := m.tokenCandidates(r)
+		if len(tokens) == 0 {
 			slog.Debug("no token", "path", r.URL.Path)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		claims, err := m.jwtManager.Validate(tokenStr)
-		if err != nil {
-			slog.Debug("invalid token", "error", err)
-			http.SetCookie(w, &http.Cookie{Name: "token", MaxAge: -1})
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
+		var lastErr error
+		for _, token := range tokens {
+			claims, err := m.jwtManager.Validate(token.value)
+			if err == nil {
+				slog.Debug("auth token accepted", "source", token.source)
+				ctx := context.WithValue(r.Context(), "claims", claims)
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+			lastErr = err
 		}
 
-		ctx := context.WithValue(r.Context(), "claims", claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		slog.Debug("invalid token", "error", lastErr)
+		http.SetCookie(w, &http.Cookie{Name: "token", MaxAge: -1})
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 	})
+}
+
+type tokenCandidate struct {
+	source string
+	value  string
+}
+
+func (m *Middleware) tokenCandidates(r *http.Request) []tokenCandidate {
+	tokens := make([]tokenCandidate, 0, 2)
+
+	if cookie, err := r.Cookie("token"); err == nil && cookie.Value != "" {
+		tokens = append(tokens, tokenCandidate{source: "cookie", value: cookie.Value})
+	}
+
+	if !m.debug {
+		return tokens
+	}
+
+	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+	const bearerPrefix = "Bearer "
+	if len(authHeader) > len(bearerPrefix) && strings.EqualFold(authHeader[:len(bearerPrefix)], bearerPrefix) {
+		token := strings.TrimSpace(authHeader[len(bearerPrefix):])
+		if token != "" {
+			tokens = append(tokens, tokenCandidate{source: "authorization_header", value: token})
+		}
+	}
+
+	return tokens
 }
