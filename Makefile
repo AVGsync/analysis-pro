@@ -23,4 +23,12 @@ migrate-up:
 	-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable" \
 	up
 
+swagger-gen:
+	@docker compose run --rm swagger \
+		init \
+		-g cmd/apiserver/main.go \
+		-o docs \
+		--parseInternal \
+		--parseDependency
+
 .DEFAULT_GOAL := run

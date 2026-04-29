@@ -38,6 +38,14 @@ services:
     networks:
       - app_net
 
+  swagger:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.swagger
+    profiles: ["swagger"]              
+    volumes:
+      - ./backend:/code
+
 networks:
   app_net:
     driver: bridge
