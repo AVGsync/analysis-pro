@@ -6,9 +6,8 @@ export
 run:
 	@cd backend && go build -v ./cmd/apiserver && ./apiserver
 
-deploy:
-	@docker compose up -d --build \
-	make migrate-up
+up:
+	@docker compose up -d --build 
 
 migrate-create:
 	@if [ -z "$(seq)" ]; then \
