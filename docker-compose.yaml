@@ -32,28 +32,9 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: "${POSTGRES_PORT}"
-      FORECAST_HOST: forecast
-      FORECAST_PORT: ${FORECAST_PORT}
       BIND_ADDR: ${BIND_ADDR}
     ports:
       - "${BIND_ADDR}:${BIND_ADDR}"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      forecast:
-        condition: service_started
-    networks:
-      - app_net
-
-  forecast:
-    build: ./forecast
-    container_name: forecast
-    expose:
-      - "${FORECAST_PORT}"
-    env_file: .env
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: "${POSTGRES_PORT}"
     depends_on:
       postgres:
         condition: service_healthy

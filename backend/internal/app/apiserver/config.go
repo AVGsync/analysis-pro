@@ -20,8 +20,6 @@ type Config struct {
 	PostgresHost     string `envconfig:"POSTGRES_HOST" default:"localhost"`
 	PostgresPort     string `envconfig:"POSTGRES_PORT" default:"5432"`
 	PostgresDB   string `envconfig:"POSTGRES_DB" default:"analysis"`
-	ForecastHost string `envconfig:"FORECAST_HOST" default:"forecast"`
-	ForecastPort string `envconfig:"FORECAST_PORT" default:"8001"`
 }
 
 
@@ -34,10 +32,6 @@ func (c *Config) DatabaseURL() string {
 		c.PostgresPassword,
 		c.PostgresDB,
 	)
-}
-
-func (c *Config) ForecastURL() string {
-	return fmt.Sprintf("http://%s:%s", c.ForecastHost, c.ForecastPort)
 }
 
 func NewConfig() (*Config, error) {

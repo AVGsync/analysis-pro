@@ -93,7 +93,7 @@ func (s *APIServer) configureRouter() {
 
 	userService := service.NewUserService(userRepo, hasher, jwtManager)
 	saleService := service.NewSaleService(saleRepo)
-	forecastService := service.NewForecastService(s.config.ForecastURL(), forecastRepo)
+	forecastService := service.NewForecastService(forecastRepo)
 	exportService := service.NewExportService(exportRepo, forecastService)
 
 	userHandler := handler.NewUserHandler(userService)

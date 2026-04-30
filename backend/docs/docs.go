@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.LoginRequest"
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest"
                         }
                     }
                 ],
@@ -87,7 +87,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.NewUserRequest"
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest"
                         }
                     }
                 ],
@@ -95,7 +95,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Профиль созданного пользователя",
                         "schema": {
-                            "$ref": "#/definitions/response.UserResponse"
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
                         }
                     },
                     "400": {
@@ -132,7 +132,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Профиль текущего пользователя",
                         "schema": {
-                            "$ref": "#/definitions/response.UserResponse"
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
                         }
                     },
                     "401": {
@@ -173,7 +173,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.UserUpdateRequest"
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest"
                         }
                     }
                 ],
@@ -181,7 +181,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Обновлённый профиль пользователя",
                         "schema": {
-                            "$ref": "#/definitions/response.UserResponse"
+                            "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse"
                         }
                     },
                     "400": {
@@ -364,7 +364,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Строит прогноз спроса по каждому товару на указанный горизонт.\nСервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.\nМетод прогноза может быть ` + "`" + `ARIMA(7,1,1)` + "`" + `, ` + "`" + `mean_fallback` + "`" + ` или ` + "`" + `no_data` + "`" + `.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
+                "description": "Строит прогноз спроса по каждому товару на указанный горизонт.\nСервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.\nАдаптивный статистический прогноз продаж. Для товаров без продаж используется нулевой прогноз, для товаров с малым количеством данных — среднее значение за период, для редких продаж — метод Croston/SBA, для регулярных продаж — EWMA-прогноз с учетом недельной сезонности и тренда. История для модели: выбранный период.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -398,7 +398,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.ForecastDetail"
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail"
                             }
                         }
                     },
@@ -458,7 +458,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.MonthlyPoint"
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint"
                             }
                         }
                     },
@@ -518,7 +518,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.RecommendationItem"
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem"
                             }
                         }
                     },
@@ -572,7 +572,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.SaleDetail"
+                                "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail"
                             }
                         }
                     },
@@ -599,115 +599,90 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "model.DailyPoint": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint": {
             "type": "object",
             "properties": {
                 "date": {
-                    "type": "string",
-                    "example": "2026-05-01"
+                    "type": "string"
                 },
                 "quantity": {
-                    "type": "integer",
-                    "example": 3
+                    "type": "integer"
                 }
             }
         },
-        "model.ForecastDetail": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail": {
             "type": "object",
             "properties": {
                 "daily_avg": {
-                    "type": "number",
-                    "example": 1.27
+                    "type": "number"
                 },
                 "daily_breakdown": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.DailyPoint"
+                        "$ref": "#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint"
                     }
                 },
                 "forecast_total": {
-                    "type": "integer",
-                    "example": 38
+                    "type": "integer"
                 },
                 "method": {
-                    "description": "Алгоритм прогноза, использованный сервисом прогнозирования: ARIMA(7,1,1), mean_fallback или no_data.",
-                    "type": "string",
-                    "example": "ARIMA(7,1,1)"
+                    "type": "string"
                 },
                 "product_id": {
-                    "type": "integer",
-                    "example": 4
+                    "type": "integer"
                 },
                 "product_name": {
-                    "type": "string",
-                    "example": "iPhone 15"
+                    "type": "string"
                 },
                 "sku": {
-                    "type": "string",
-                    "example": "PHONE-IPHONE-15"
+                    "type": "string"
                 }
             }
         },
-        "model.MonthlyPoint": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint": {
             "type": "object",
             "properties": {
                 "forecast_qty": {
-                    "type": "integer",
-                    "example": 143
+                    "type": "integer"
                 },
                 "forecast_revenue": {
-                    "type": "number",
-                    "example": 8754321.5
+                    "type": "number"
                 },
                 "month": {
-                    "type": "string",
-                    "example": "2026-05-01"
+                    "type": "string"
                 }
             }
         },
-        "model.RecommendationItem": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem": {
             "type": "object",
             "properties": {
                 "current_stock": {
-                    "type": "integer",
-                    "example": 6
+                    "type": "integer"
                 },
                 "forecast_total": {
-                    "type": "integer",
-                    "example": 42
+                    "type": "integer"
                 },
                 "product_id": {
-                    "type": "integer",
-                    "example": 9
+                    "type": "integer"
                 },
                 "product_name": {
-                    "type": "string",
-                    "example": "AirPods Pro 2"
+                    "type": "string"
                 },
                 "recommend_order": {
-                    "type": "integer",
-                    "example": 36
+                    "type": "integer"
                 },
                 "sku": {
-                    "type": "string",
-                    "example": "AUDIO-AIRPODS-PRO-2"
+                    "type": "string"
                 },
                 "stock_days_left": {
-                    "type": "integer",
-                    "example": 4
+                    "type": "integer"
                 },
                 "urgency": {
-                    "type": "string",
-                    "enum": [
-                        "high",
-                        "medium",
-                        "ok"
-                    ],
-                    "example": "high"
+                    "type": "string"
                 }
             }
         },
-        "model.SaleDetail": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail": {
             "type": "object",
             "properties": {
                 "category": {
@@ -732,7 +707,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.LoginRequest": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -751,7 +726,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.NewUserRequest": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -779,7 +754,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.UserUpdateRequest": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -796,7 +771,7 @@ const docTemplate = `{
                 }
             }
         },
-        "response.UserResponse": {
+        "github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse": {
             "type": "object",
             "properties": {
                 "email": {

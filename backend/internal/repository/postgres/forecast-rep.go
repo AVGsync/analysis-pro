@@ -67,7 +67,7 @@ func (r *ForecastRepository) GetProductsWithSales(ctx context.Context, historyDa
 		// добавляем продажу если она есть (LEFT JOIN может вернуть NULL)
 		if soldAt != nil && qty != nil {
 			productMap[id].Sales = append(productMap[id].Sales, model.SaleRecord{
-				SoldAt:   soldAt.Format("2006-01-02"),
+				SoldAt:   *soldAt,
 				Quantity: *qty,
 			})
 		}

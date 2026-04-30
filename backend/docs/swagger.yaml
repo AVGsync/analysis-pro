@@ -1,85 +1,60 @@
 basePath: /api
 definitions:
-  model.DailyPoint:
+  github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint:
     properties:
       date:
-        example: "2026-05-01"
         type: string
       quantity:
-        example: 3
         type: integer
     type: object
-  model.ForecastDetail:
+  github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail:
     properties:
       daily_avg:
-        example: 1.27
         type: number
       daily_breakdown:
         items:
-          $ref: '#/definitions/model.DailyPoint'
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.DailyPoint'
         type: array
       forecast_total:
-        example: 38
         type: integer
       method:
-        description: 'Алгоритм прогноза, использованный сервисом прогнозирования:
-          ARIMA(7,1,1), mean_fallback или no_data.'
-        example: ARIMA(7,1,1)
         type: string
       product_id:
-        example: 4
         type: integer
       product_name:
-        example: iPhone 15
         type: string
       sku:
-        example: PHONE-IPHONE-15
         type: string
     type: object
-  model.MonthlyPoint:
+  github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint:
     properties:
       forecast_qty:
-        example: 143
         type: integer
       forecast_revenue:
-        example: 8.7543215e+06
         type: number
       month:
-        example: "2026-05-01"
         type: string
     type: object
-  model.RecommendationItem:
+  github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem:
     properties:
       current_stock:
-        example: 6
         type: integer
       forecast_total:
-        example: 42
         type: integer
       product_id:
-        example: 9
         type: integer
       product_name:
-        example: AirPods Pro 2
         type: string
       recommend_order:
-        example: 36
         type: integer
       sku:
-        example: AUDIO-AIRPODS-PRO-2
         type: string
       stock_days_left:
-        example: 4
         type: integer
       urgency:
-        enum:
-        - high
-        - medium
-        - ok
-        example: high
         type: string
     type: object
-  model.SaleDetail:
+  github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail:
     properties:
       category:
         example: Смартфоны
@@ -97,7 +72,7 @@ definitions:
         example: "2026-04-29T00:00:00Z"
         type: string
     type: object
-  request.LoginRequest:
+  github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest:
     properties:
       email:
         description: Email зарегистрированного пользователя.
@@ -111,7 +86,7 @@ definitions:
     - email
     - password
     type: object
-  request.NewUserRequest:
+  github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest:
     properties:
       email:
         description: Уникальный email, используется для входа.
@@ -133,7 +108,7 @@ definitions:
     - full_name
     - password
     type: object
-  request.UserUpdateRequest:
+  github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest:
     properties:
       email:
         description: Новый email. Если поле не передано, текущее значение не меняется.
@@ -147,7 +122,7 @@ definitions:
         minLength: 3
         type: string
     type: object
-  response.UserResponse:
+  github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse:
     properties:
       email:
         example: ivan.petrov@example.com
@@ -199,7 +174,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/request.LoginRequest'
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.LoginRequest'
       produces:
       - text/plain
       responses:
@@ -238,14 +213,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/request.NewUserRequest'
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.NewUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Профиль созданного пользователя
           schema:
-            $ref: '#/definitions/response.UserResponse'
+            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
         "400":
           description: Некорректное тело запроса
           schema:
@@ -268,7 +243,7 @@ paths:
         "200":
           description: Профиль текущего пользователя
           schema:
-            $ref: '#/definitions/response.UserResponse'
+            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
         "401":
           description: Пользователь не авторизован
           schema:
@@ -296,14 +271,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/request.UserUpdateRequest'
+          $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_request.UserUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Обновлённый профиль пользователя
           schema:
-            $ref: '#/definitions/response.UserResponse'
+            $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model_response.UserResponse'
         "400":
           description: Некорректное тело запроса
           schema:
@@ -439,7 +414,7 @@ paths:
       description: |-
         Строит прогноз спроса по каждому товару на указанный горизонт.
         Сервер загружает историю продаж товаров из PostgreSQL и вызывает сервис прогнозирования.
-        Метод прогноза может быть `ARIMA(7,1,1)`, `mean_fallback` или `no_data`.
+        Адаптивный статистический прогноз продаж. Для товаров без продаж используется нулевой прогноз, для товаров с малым количеством данных — среднее значение за период, для редких продаж — метод Croston/SBA, для регулярных продаж — EWMA-прогноз с учетом недельной сезонности и тренда. История для модели: выбранный период.
         Требует валидную cookie `token`.
       parameters:
       - default: 30
@@ -463,7 +438,7 @@ paths:
           description: Прогноз по каждому товару с разбивкой по дням
           schema:
             items:
-              $ref: '#/definitions/model.ForecastDetail'
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.ForecastDetail'
             type: array
         "401":
           description: Пользователь не авторизован
@@ -506,7 +481,7 @@ paths:
           description: Итоги прогноза, сгруппированные по месяцам
           schema:
             items:
-              $ref: '#/definitions/model.MonthlyPoint'
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.MonthlyPoint'
             type: array
         "401":
           description: Пользователь не авторизован
@@ -550,7 +525,7 @@ paths:
           description: Список рекомендаций по закупкам, отсортированный по срочности
           schema:
             items:
-              $ref: '#/definitions/model.RecommendationItem'
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.RecommendationItem'
             type: array
         "401":
           description: Пользователь не авторизован
@@ -588,7 +563,7 @@ paths:
           description: Строки детализации продаж
           schema:
             items:
-              $ref: '#/definitions/model.SaleDetail'
+              $ref: '#/definitions/github_com_AVGsync_analysis-pro_backend_internal_model.SaleDetail'
             type: array
         "400":
           description: Некорректные query-параметры
