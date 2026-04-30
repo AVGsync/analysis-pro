@@ -6,6 +6,10 @@ export
 run:
 	@cd backend && go build -v ./cmd/apiserver && ./apiserver
 
+deploy:
+	@docker compose up -d --build \
+	make migrate-up
+
 migrate-create:
 	@if [ -z "$(seq)" ]; then \
 		echo "Отсутствует необходимый параметр seq. Пример: make migrate-create seq=init"; \
