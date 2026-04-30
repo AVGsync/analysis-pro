@@ -1,22 +1,23 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { api } from '../api/index.js'
 import Layout from '../components/Layout.jsx'
 import ExportModal from '../components/ExportModal.jsx'
 import { Card, SecondaryButton, Spinner, ErrorBox } from '../components/UI.jsx'
+import { FilterModal } from './SalesPage.jsx'
 
 const fmt = (n) => new Intl.NumberFormat('ru-RU').format(Math.round(n || 0))
 const fmtRub = (n) => `${fmt(n)} ₽`
-
-const STATUS = {
-  green: { bg: '#DCFCE7', color: '#166534', label: 'Высокий приоритет' },
-  yellow: { bg: '#FEF3C7', color: '#92400E', label: 'Средний приоритет' },
-  red: { bg: '#FEE2E2', color: '#B91C1C', label: 'Низкий приоритет' },
-}
 
 const CELL_COLORS = {
   AX: 'green', AY: 'green', AZ: 'green',
   BX: 'yellow', BY: 'yellow', BZ: 'yellow',
   CX: 'red', CY: 'red', CZ: 'red',
+}
+
+const GROUP_BG = {
+  green: { bg: '#DCFCE7', text: '#166534', border: '#86EFAC' },
+  yellow: { bg: '#FEF3C7', text: '#92400E', border: '#FCD34D' },
+  red: { bg: '#FEE2E2', text: '#B91C1C', border: '#FCA5A5' },
 }
 
 function buildAssortment(rows) {
@@ -55,7 +56,7 @@ function buildAssortment(rows) {
       ...item,
       abc, xyz, abc_xyz: group,
       revenuePct: (item.revenue / totalRevenue * 100).toFixed(1),
-      status: CELL_COLORS[group],
+      colorKey: CELL_COLORS[group],
     }
   })
 }
@@ -68,19 +69,40 @@ function buildMatrix(items) {
 }
 
 const TABLE_COLS = [
-  { key: 'sku', label: 'SKU', width: '160px' },
-  { key: 'product_name', label: 'Товар', width: '1.4fr' },
-  { key: 'category', label: 'Категория', width: '160px' },
-  { key: 'abc_xyz', label: 'Класс', width: '90px' },
+  { key: 'product_name', label: 'Товар', width: '1.6fr' },
+  { key: 'category', label: 'Категория', width: '180px' },
+  { key: 'abc_xyz', label: 'Группа', width: '140px', render: (v, row) => {
+    const c = GROUP_BG[row.colorKey]
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        minWidth: 48, height: 28, padding: '0 12px', borderRadius: 14,
+        backgroundColor: c.bg, color: c.text, border: `1px solid ${c.border}`,
+        fontSize: 13, fontWeight: 700,
+      }}>{v}</span>
+    )
+  }},
   { key: 'revenue', label: 'Выручка', width: '160px', render: v => fmtRub(v) },
   { key: 'quantity', label: 'Продано', width: '110px', render: v => fmt(v) },
-  { key: 'status', label: 'Статус', width: '180px', render: v => (
-    <span style={{
-      fontSize: 12, fontWeight: 600,
-      backgroundColor: STATUS[v].bg, color: STATUS[v].color,
-      padding: '4px 12px', borderRadius: 20,
-    }}>{STATUS[v].label}</span>
-  )},
+]
+
+function computeRange(period, customFrom, customTo) {
+  if (period === 'all') return { from: '', to: '' }
+  if (period === 'custom') return { from: customFrom, to: customTo }
+  const days = parseInt(period, 10)
+  const to = new Date()
+  const from = new Date()
+  from.setDate(to.getDate() - days)
+  const iso = (d) => d.toISOString().slice(0, 10)
+  return { from: iso(from), to: iso(to) }
+}
+
+const PERIOD_OPTIONS = [
+  { id: 'all', label: 'Всё время' },
+  { id: '7', label: '7 дней' },
+  { id: '30', label: '30 дней' },
+  { id: '90', label: '3 месяца' },
+  { id: 'custom', label: 'Произвольный' },
 ]
 
 export default function AssortmentPage() {
@@ -88,15 +110,27 @@ export default function AssortmentPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showExport, setShowExport] = useState(false)
+  const [showFilter, setShowFilter] = useState(false)
   const [activeCell, setActiveCell] = useState(null)
+  const [filter, setFilter] = useState({ period: 'all', from: '', to: '', category: 'all' })
 
-  useEffect(() => {
+  const range = useMemo(() => computeRange(filter.period, filter.from, filter.to), [filter])
+
+  const load = useCallback(async () => {
     setLoading(true); setError('')
-    api.sellDetail(null, null)
-      .then(data => setRows(buildAssortment(Array.isArray(data) ? data : [])))
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
-  }, [])
+    try {
+      const data = await api.sellDetail(range.from || null, range.to || null)
+      let list = Array.isArray(data) ? data : []
+      if (filter.category !== 'all') list = list.filter(r => r.category === filter.category)
+      setRows(buildAssortment(list))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [range.from, range.to, filter.category])
+
+  useEffect(() => { load() }, [load])
 
   const matrix = useMemo(() => buildMatrix(rows), [rows])
   const filtered = activeCell ? rows.filter(r => r.abc_xyz === activeCell) : rows
@@ -112,9 +146,17 @@ export default function AssortmentPage() {
           }}
         />
       )}
+      {showFilter && (
+        <FilterModal
+          initial={filter}
+          periodOptions={PERIOD_OPTIONS}
+          onClose={() => setShowFilter(false)}
+          onApply={(f) => { setFilter(f); setShowFilter(false) }}
+        />
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 28 }}>
-        <SecondaryButton>
+        <SecondaryButton onClick={() => setShowFilter(true)}>
           <FilterIcon /> Фильтры
         </SecondaryButton>
         <SecondaryButton onClick={() => setShowExport(true)}>
@@ -135,7 +177,7 @@ export default function AssortmentPage() {
         {loading ? <Spinner /> : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '70px repeat(3, 1fr)',
+            gridTemplateColumns: '170px repeat(3, 1fr)',
             gap: 10,
           }}>
             <div />
@@ -145,10 +187,15 @@ export default function AssortmentPage() {
               }}>{label}</div>
             ))}
 
-            {['A', 'B', 'C'].map(a => (
+            {[
+              { key: 'A', label: 'Высокая выручка' },
+              { key: 'B', label: 'Средняя выручка' },
+              { key: 'C', label: 'Низкая выручка' },
+            ].map(row => (
               <RowCells
-                key={a}
-                rowKey={a}
+                key={row.key}
+                rowKey={row.key}
+                rowLabel={row.label}
                 matrix={matrix}
                 activeCell={activeCell}
                 onCellClick={(group) => setActiveCell(activeCell === group ? null : group)}
@@ -204,17 +251,23 @@ export default function AssortmentPage() {
   )
 }
 
-function RowCells({ rowKey, matrix, activeCell, onCellClick }) {
+function RowCells({ rowKey, rowLabel, matrix, activeCell, onCellClick }) {
   return (
     <>
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 16, fontWeight: 700, color: '#475569',
-      }}>{rowKey}</div>
+        display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12, paddingRight: 4,
+      }}>
+        <div style={{
+          fontSize: 12, fontWeight: 500, color: '#64748B', textAlign: 'right', lineHeight: 1.2,
+        }}>{rowLabel}</div>
+        <div style={{
+          fontSize: 18, fontWeight: 700, color: '#475569', minWidth: 18, textAlign: 'center',
+        }}>{rowKey}</div>
+      </div>
       {['X', 'Y', 'Z'].map(x => {
         const group = `${rowKey}${x}`
         const status = CELL_COLORS[group]
-        const colors = MATRIX_BG[status]
+        const colors = GROUP_BG[status]
         const isActive = activeCell === group
         return (
           <button
@@ -240,12 +293,6 @@ function RowCells({ rowKey, matrix, activeCell, onCellClick }) {
       })}
     </>
   )
-}
-
-const MATRIX_BG = {
-  green: { bg: '#DCFCE7', border: '#86EFAC', text: '#166534' },
-  yellow: { bg: '#FEF3C7', border: '#FCD34D', text: '#92400E' },
-  red: { bg: '#FEE2E2', border: '#FCA5A5', text: '#B91C1C' },
 }
 
 const FilterIcon = () => (

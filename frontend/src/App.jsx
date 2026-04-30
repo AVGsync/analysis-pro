@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect, createContext, useContext } from 'react'
 import { api } from './api/index.js'
 
+import LandingPage from './pages/LandingPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import OnboardingPage from './pages/OnboardingPage.jsx'
@@ -54,10 +55,10 @@ export default function App() {
     <AuthContext.Provider value={{ user, setUser, login, logout, loading }}>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/onboarding" element={<RequireAuth><OnboardingPage /></RequireAuth>} />
-          <Route path="/" element={<RequireAuth><SalesPage /></RequireAuth>} />
           <Route path="/sales" element={<RequireAuth><SalesPage /></RequireAuth>} />
           <Route path="/assortment" element={<RequireAuth><AssortmentPage /></RequireAuth>} />
           <Route path="/forecast" element={<RequireAuth><ForecastPage /></RequireAuth>} />

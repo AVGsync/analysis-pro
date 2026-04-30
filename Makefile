@@ -23,6 +23,12 @@ migrate-up:
 	-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable" \
 	up
 
+migrate-down:
+	@docker compose run --rm postgres-migrate \
+	-path /migrations \
+	-database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable" \
+	down
+
 swagger-gen:
 	@docker compose run --rm swagger \
 		init \

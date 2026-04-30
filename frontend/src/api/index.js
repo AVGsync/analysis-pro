@@ -33,11 +33,13 @@ export const api = {
   updateMe: (data) =>
     request('/me', { method: 'PATCH', body: JSON.stringify(data) }),
 
-  sellDetail: (from, to) =>
-    request('/products/sell-detail', {
-      method: 'POST',
-      body: JSON.stringify({ from: from || '', to: to || '' }),
-    }),
+  sellDetail: (from, to) => {
+    const qs = new URLSearchParams()
+    if (from) qs.set('from', from)
+    if (to) qs.set('to', to)
+    const q = qs.toString()
+    return request(`/products/sell-detail${q ? '?' + q : ''}`)
+  },
 
   forecast: (days = 30, history = 90) =>
     request(`/products/forecast?days=${days}&history=${history}`),

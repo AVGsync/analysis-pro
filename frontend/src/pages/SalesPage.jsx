@@ -10,7 +10,12 @@ import {
 
 const fmt = (n) => new Intl.NumberFormat('ru-RU').format(Math.round(n || 0))
 const fmtRub = (n) => `${fmt(n)} ₽`
-const fmtDate = (iso) => {
+const fmtDateShort = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+const fmtDateFull = (iso) => {
   if (!iso) return ''
   const d = new Date(iso)
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
@@ -43,7 +48,7 @@ function buildDaily(rows) {
   })
   return Object.values(map)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map(d => ({ ...d, dateLabel: fmtDate(d.date + 'T00:00:00Z') }))
+    .map(d => ({ ...d, dateLabel: fmtDateShort(d.date + 'T00:00:00Z') }))
 }
 
 function buildTop5(rows) {
@@ -56,7 +61,7 @@ function buildTop5(rows) {
   return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
 }
 
-function FilterModal({ initial, onClose, onApply }) {
+export function FilterModal({ initial, onClose, onApply, periodOptions = PERIOD_OPTIONS }) {
   const [period, setPeriod] = useState(initial.period)
   const [from, setFrom] = useState(initial.from)
   const [to, setTo] = useState(initial.to)
@@ -73,7 +78,7 @@ function FilterModal({ initial, onClose, onApply }) {
           <div>
             <div style={fieldLabel}>Период</div>
             <select value={period} onChange={e => setPeriod(e.target.value)} style={selectStyle}>
-              {PERIOD_OPTIONS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+              {periodOptions.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </div>
           {period === 'custom' && (
@@ -104,11 +109,11 @@ function FilterModal({ initial, onClose, onApply }) {
 }
 
 const TABLE_COLS = [
-  { key: 'sold_at', label: 'Дата', width: '160px', render: v => fmtDate(v) },
+  { key: 'sold_at', label: 'Дата', width: '160px', render: v => fmtDateFull(v) },
   { key: 'product_name', label: 'Товар', width: '1.4fr' },
   { key: 'category', label: 'Категория', width: '160px' },
   { key: 'quantity', label: 'Кол-во', width: '100px' },
-  { key: 'revenue', label: 'Выручка', width: '160px', render: v => fmtRub(v) },
+  { key: 'revenue', label: 'Сумма', width: '160px', render: v => fmtRub(v) },
 ]
 
 export default function SalesPage() {
@@ -118,6 +123,7 @@ export default function SalesPage() {
   const [filter, setFilter] = useState({ period: '30', from: '', to: '', category: 'all' })
   const [showFilter, setShowFilter] = useState(false)
   const [showExport, setShowExport] = useState(false)
+  const [search, setSearch] = useState('')
 
   const range = useMemo(() => computeRange(filter.period, filter.from, filter.to), [filter])
 
@@ -142,7 +148,17 @@ export default function SalesPage() {
 
   const totalRevenue = rows.reduce((s, r) => s + (r.revenue || 0), 0)
   const totalQty = rows.reduce((s, r) => s + (r.quantity || 0), 0)
-  const profit = Math.round(totalRevenue * 0.18)
+  const txCount = rows.length
+  const avgCheck = txCount > 0 ? totalRevenue / txCount : 0
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return rows
+    return rows.filter(r =>
+      (r.product_name || '').toLowerCase().includes(q) ||
+      (r.category || '').toLowerCase().includes(q)
+    )
+  }, [rows, search])
 
   const handleExport = ({ format }) => {
     setShowExport(false)
@@ -173,22 +189,23 @@ export default function SalesPage() {
           icon={<RubIcon />}
         />
         <KpiCard
-          label="Прибыль"
-          value={fmtRub(profit)}
-          delta="+8.3% к прошлому периоду"
+          label="Средний чек"
+          value={fmtRub(avgCheck)}
+          delta={`${fmt(txCount)} транзакций`}
           icon={<TrendIcon />}
+          deltaColor="#64748B"
         />
         <KpiCard
           label="Количество продаж"
           value={fmt(totalQty)}
-          delta={`${rows.length} транзакций`}
+          delta={`${fmt(txCount)} транзакций`}
           icon={<BarsIcon />}
           deltaColor="#64748B"
         />
       </div>
 
       <Card style={{ padding: 24, marginBottom: 24 }}>
-        <ChartTitle title="Динамика выручки" subtitle="Сумма продаж по дням за выбранный период" />
+        <ChartTitle title="Динамика продаж" subtitle="Выручка и количество продаж за период" />
         {loading ? <Spinner /> : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={daily} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
@@ -198,9 +215,13 @@ export default function SalesPage() {
                 tickFormatter={v => v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}k`} />
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={v => [fmtRub(v), 'Выручка']}
+                formatter={(v, name) => {
+                  if (name === 'quantity') return [fmt(v), 'Кол-во']
+                  return [fmtRub(v), 'Выручка']
+                }}
               />
-              <Line type="monotone" dataKey="revenue" stroke="#155DFC" strokeWidth={2.5} dot={{ r: 3, fill: '#155DFC' }} />
+              <Line type="monotone" dataKey="revenue" stroke="#155DFC" strokeWidth={2.5} dot={{ r: 3, fill: '#155DFC' }} name="revenue" />
+              <Line type="monotone" dataKey="quantity" stroke="#10B981" strokeWidth={2} dot={{ r: 3, fill: '#10B981' }} name="quantity" yAxisId={0} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -215,23 +236,8 @@ export default function SalesPage() {
               <XAxis type="number" tick={{ fontSize: 12, fill: '#6B7280' }} tickLine={false} axisLine={false}
                 tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#374151' }} width={180} tickLine={false} axisLine={false} />
-              <Tooltip formatter={v => fmtRub(v)} contentStyle={tooltipStyle} />
-              <Bar dataKey="revenue" fill="#155DFC" radius={[0, 6, 6, 0]} barSize={22} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </Card>
-
-      <Card style={{ padding: 24, marginBottom: 24 }}>
-        <ChartTitle title="Динамика продаж" subtitle="Количество проданных позиций по дням" />
-        {loading ? <Spinner /> : (
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={daily} margin={{ top: 10, right: 20, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-              <XAxis dataKey="dateLabel" tick={{ fontSize: 12, fill: '#6B7280' }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fontSize: 12, fill: '#6B7280' }} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={tooltipStyle} formatter={v => [fmt(v), 'Кол-во']} />
-              <Bar dataKey="quantity" fill="#155DFC" radius={[6, 6, 0, 0]} barSize={20} />
+              <Tooltip formatter={(v) => [fmtRub(v), 'Выручка']} contentStyle={tooltipStyle} />
+              <Bar dataKey="revenue" fill="#155DFC" radius={[0, 6, 6, 0]} barSize={22} name="Выручка" />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -239,15 +245,29 @@ export default function SalesPage() {
 
       <Card style={{ overflow: 'hidden' }}>
         <div style={{ padding: 24, borderBottom: '1px solid #E5E7EB' }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#101828' }}>Детализация продаж</div>
-          <div style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Список транзакций за выбранный период</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#101828' }}>Детализация продаж</div>
+              <div style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Список транзакций за выбранный период</div>
+            </div>
+            <div style={{ position: 'relative', minWidth: 280 }}>
+              <SearchIcon />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Поиск товара..."
+                style={searchInput}
+              />
+            </div>
+          </div>
         </div>
         {loading ? <Spinner /> : (
           <div style={{ overflowX: 'auto' }}>
             <div style={{ ...tableHeader, gridTemplateColumns: TABLE_COLS.map(c => c.width).join(' ') }}>
               {TABLE_COLS.map(c => <div key={c.key} style={tableHeaderCell}>{c.label}</div>)}
             </div>
-            {rows.slice(0, 50).map((row, i) => (
+            {filteredRows.slice(0, 50).map((row, i) => (
               <div key={i} style={{
                 display: 'grid', gridTemplateColumns: TABLE_COLS.map(c => c.width).join(' '),
                 borderBottom: '1px solid #F1F5F9',
@@ -260,7 +280,7 @@ export default function SalesPage() {
                 ))}
               </div>
             ))}
-            {rows.length === 0 && (
+            {filteredRows.length === 0 && (
               <div style={{ padding: 32, textAlign: 'center', color: '#9CA3AF', fontSize: 14 }}>
                 Нет данных за выбранный период
               </div>
@@ -336,7 +356,19 @@ const BarsIcon = () => (
     <rect x="15" y="3" width="4" height="16" rx="1" fill="#155DFC" />
   </svg>
 )
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{
+    position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', pointerEvents: 'none',
+  }}>
+    <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+)
 
+const searchInput = {
+  width: '100%', height: 40, borderRadius: 10, border: '1px solid #D1D5DB',
+  padding: '0 14px 0 36px', fontSize: 14, fontFamily: 'Inter', outline: 'none', color: '#0A0A0A',
+}
 const actionBar = { display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 28 }
 const kpiRow = { display: 'flex', gap: 20, marginBottom: 28 }
 const overlay = {
