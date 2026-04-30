@@ -27,15 +27,16 @@ func NewSaleHandler(useCase SaleUseCase) *SaleHandler {
 //
 // @Summary Получить детализацию продаж
 // @Description Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.
-// @Description Запрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.
-// @Description Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.
+// @Description Фильтр периода передаётся query-параметрами `from` и `to` в формате `YYYY-MM-DD`.
+// @Description Если `from` не передан, используется дата месяц назад. Если `to` не передан, используется текущая дата.
+// @Description Требует валидную cookie `token`.
 // @Tags Товары
-// @Accept json
 // @Produce json
 // @Security CookieAuth
-// @Param request body request.DetailsSaleRequest true "Необязательный фильтр по датам. Примеры значений указаны в схеме."
+// @Param from query string false "Начало периода включительно в формате YYYY-MM-DD. Пример: 2026-02-01."
+// @Param to query string false "Конец периода включительно в формате YYYY-MM-DD. Пример: 2026-04-30."
 // @Success 200 {array} model.SaleDetail "Строки детализации продаж"
-// @Failure 400 {string} string "Некорректное тело запроса"
+// @Failure 400 {string} string "Некорректные query-параметры"
 // @Failure 401 {string} string "Пользователь не авторизован"
 // @Failure 500 {string} string "Claims не найдены в контексте"
 // @Failure 500 {string} string "Не удалось получить детализацию продаж"
@@ -48,11 +49,11 @@ func (h *SaleHandler) GetSaleDetails() http.HandlerFunc {
 			return
 		}
 
-		req := request.DetailsSaleRequest{}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request body", http.StatusBadRequest)
-			return
+		req := request.DetailsSaleRequest{
+			From: r.URL.Query().Get("from"),
+			To:   r.URL.Query().Get("to"),
 		}
+		
 
 		sales, err := h.useCase.GetSaleDetails(r.Context(), req)
 		if err != nil {

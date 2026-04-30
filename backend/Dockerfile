@@ -1,0 +1,24 @@
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY cmd ./cmd
+COPY docs ./docs
+COPY internal ./internal
+
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/apiserver ./cmd/apiserver
+
+FROM alpine:3.20
+
+RUN adduser -D -H -u 10001 appuser
+
+WORKDIR /app
+COPY --from=builder /out/apiserver /app/apiserver
+
+USER appuser
+EXPOSE 8080
+
+ENTRYPOINT ["/app/apiserver"]

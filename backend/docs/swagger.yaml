@@ -97,19 +97,6 @@ definitions:
         example: "2026-04-29T00:00:00Z"
         type: string
     type: object
-  request.DetailsSaleRequest:
-    properties:
-      from:
-        description: Начало периода включительно в формате YYYY-MM-DD. Пустое значение
-          означает отсутствие нижней границы.
-        example: "2026-02-01"
-        type: string
-      to:
-        description: Конец периода включительно в формате YYYY-MM-DD. Пустое значение
-          означает отсутствие верхней границы.
-        example: "2026-04-30"
-        type: string
-    type: object
   request.LoginRequest:
     properties:
       email:
@@ -580,19 +567,20 @@ paths:
       - Прогноз
   /products/sell-detail:
     get:
-      consumes:
-      - application/json
       description: |-
         Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.
-        Запрос использует JSON body с необязательными датами `from` и `to` в формате `YYYY-MM-DD`.
-        Пустое тело `{}` возвращает все доступные продажи. Требует валидную cookie `token`.
+        Фильтр периода передаётся query-параметрами `from` и `to` в формате `YYYY-MM-DD`.
+        Если `from` не передан, используется дата месяц назад. Если `to` не передан, используется текущая дата.
+        Требует валидную cookie `token`.
       parameters:
-      - description: Необязательный фильтр по датам. Примеры значений указаны в схеме.
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.DetailsSaleRequest'
+      - description: 'Начало периода включительно в формате YYYY-MM-DD. Пример: 2026-02-01.'
+        in: query
+        name: from
+        type: string
+      - description: 'Конец периода включительно в формате YYYY-MM-DD. Пример: 2026-04-30.'
+        in: query
+        name: to
+        type: string
       produces:
       - application/json
       responses:
@@ -603,7 +591,7 @@ paths:
               $ref: '#/definitions/model.SaleDetail'
             type: array
         "400":
-          description: Некорректное тело запроса
+          description: Некорректные query-параметры
           schema:
             type: string
         "401":

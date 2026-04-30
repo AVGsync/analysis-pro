@@ -51,7 +51,7 @@ func (s *APIServer) Start() error {
 		"debug", s.config.Debug,
 	)
 
-	return http.ListenAndServe(s.config.BindAddr, s.router)
+	return http.ListenAndServe(fmt.Sprintf(":%s", s.config.BindAddr), s.router)
 }
 
 func newLogger(cfg *Config) (*slog.Logger, error) {
@@ -108,7 +108,7 @@ func (s *APIServer) configureRouter() {
 			http.Redirect(w, r, "/swagger/index.html", http.StatusMovedPermanently)
 		})
 		s.router.Get("/swagger/*", httpSwagger.WrapHandler)
-		slog.Debug("swagger UI enabled", "url", fmt.Sprintf("http://localhost%s/swagger/index.html", s.config.BindAddr))
+		slog.Debug("swagger UI enabled", "url", fmt.Sprintf("http://localhost:%s/swagger/index.html", s.config.BindAddr))
 	}
 
 	s.router.Route("/api", func(r chi.Router) {

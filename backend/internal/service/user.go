@@ -2,12 +2,15 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/AVGsync/analysis-pro/backend/internal/model"
 	"github.com/AVGsync/analysis-pro/backend/internal/model/request"
 	"github.com/AVGsync/analysis-pro/backend/internal/model/response"
 )
+
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 type UserRepository interface {
 	RegisterNewUser(user *model.User, ctx context.Context) (response.UserResponse, error)
@@ -27,14 +30,14 @@ type JWTManager interface {
 
 type UserService struct {
 	repository UserRepository
-	hasher Hasher
+	hasher     Hasher
 	jwtManager JWTManager
 }
 
 func NewUserService(repository UserRepository, hasher Hasher, jwtManager JWTManager) *UserService {
 	return &UserService{
 		repository: repository,
-		hasher: hasher,
+		hasher:     hasher,
 		jwtManager: jwtManager,
 	}
 }
@@ -47,11 +50,11 @@ func (s *UserService) RegisterNewUser(user *request.NewUserRequest, ctx context.
 	}
 
 	u := model.User{
-		FullName: user.FullName,
-		Email: user.Email,
-		Role: "user",
-		PasswordHash: hashed_password,
-		SubscriptionPlan: "free",
+		FullName:            user.FullName,
+		Email:               user.Email,
+		Role:                "user",
+		PasswordHash:        hashed_password,
+		SubscriptionPlan:    "free",
 		SubscriptionExpires: nil,
 	}
 
@@ -71,8 +74,8 @@ func (s *UserService) AuthenticateUser(req request.LoginRequest, ctx context.Con
 	}
 
 	if !s.hasher.CheckPassword(req.Password, user.PasswordHash) {
-		slog.Debug("password check failed", "error", err, "email", req.Email)
-		return "", err
+		slog.Debug("password check failed", "email", req.Email)
+		return "", ErrInvalidCredentials
 	}
 
 	token, err := s.jwtManager.Generate(user.ID, user.Role, user.SubscriptionPlan)
@@ -92,11 +95,11 @@ func (s *UserService) GetUserByID(id string, ctx context.Context) (response.User
 	}
 
 	return response.UserResponse{
-		ID: u.ID,
-		Email: u.Email,
-		Fullname: u.FullName,
-		Role: u.Role,
-		SubscriptionPlan: u.SubscriptionPlan,
+		ID:                  u.ID,
+		Email:               u.Email,
+		Fullname:            u.FullName,
+		Role:                u.Role,
+		SubscriptionPlan:    u.SubscriptionPlan,
 		SubscriptionExpires: u.SubscriptionExpires,
 	}, nil
 }

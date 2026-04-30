@@ -544,10 +544,7 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.\nЗапрос использует JSON body с необязательными датами ` + "`" + `from` + "`" + ` и ` + "`" + `to` + "`" + ` в формате ` + "`" + `YYYY-MM-DD` + "`" + `.\nПустое тело ` + "`" + `{}` + "`" + ` возвращает все доступные продажи. Требует валидную cookie ` + "`" + `token` + "`" + `.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Возвращает продажи товаров, сгруппированные по дате продажи, товару и категории.\nФильтр периода передаётся query-параметрами ` + "`" + `from` + "`" + ` и ` + "`" + `to` + "`" + ` в формате ` + "`" + `YYYY-MM-DD` + "`" + `.\nЕсли ` + "`" + `from` + "`" + ` не передан, используется дата месяц назад. Если ` + "`" + `to` + "`" + ` не передан, используется текущая дата.\nТребует валидную cookie ` + "`" + `token` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -557,13 +554,16 @@ const docTemplate = `{
                 "summary": "Получить детализацию продаж",
                 "parameters": [
                     {
-                        "description": "Необязательный фильтр по датам. Примеры значений указаны в схеме.",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.DetailsSaleRequest"
-                        }
+                        "type": "string",
+                        "description": "Начало периода включительно в формате YYYY-MM-DD. Пример: 2026-02-01.",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Конец периода включительно в формате YYYY-MM-DD. Пример: 2026-04-30.",
+                        "name": "to",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -577,7 +577,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Некорректное тело запроса",
+                        "description": "Некорректные query-параметры",
                         "schema": {
                             "type": "string"
                         }
@@ -729,21 +729,6 @@ const docTemplate = `{
                 "sold_at": {
                     "type": "string",
                     "example": "2026-04-29T00:00:00Z"
-                }
-            }
-        },
-        "request.DetailsSaleRequest": {
-            "type": "object",
-            "properties": {
-                "from": {
-                    "description": "Начало периода включительно в формате YYYY-MM-DD. Пустое значение означает отсутствие нижней границы.",
-                    "type": "string",
-                    "example": "2026-02-01"
-                },
-                "to": {
-                    "description": "Конец периода включительно в формате YYYY-MM-DD. Пустое значение означает отсутствие верхней границы.",
-                    "type": "string",
-                    "example": "2026-04-30"
                 }
             }
         },
